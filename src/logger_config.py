@@ -1,54 +1,46 @@
 import logging
 import sys
-from pathlib import Path
+import os
 
 
-def setup_logging():
-    """Konfiguruje globalny logger z obsługą UTF-8"""
-    # Tworzenie katalogu logs, jeśli nie istnieje
-    log_dir = Path("logs")
-    log_dir.mkdir(exist_ok=True)
+def setup_logger(name: str = "BotLogger") -> logging.Logger:
+    """
+    Konfiguruje logger, który wypisuje komunikaty na konsolę (kolorowe)
+    oraz zapisuje je do pliku (bot_activity.log).
+    """
+    logger = logging.getLogger(name)
+    logger.setLevel(logging.DEBUG)  # Rejestrujemy wszystko od poziomu DEBUG w górę
 
-    # Konfiguracja formatu loggera
-    log_format = '%(asctime)s - %(levelname)s - %(name)s - %(message)s'
+    # Zapobiegamy dublowaniu logów przy wielokrotnym imporcie
+    if logger.handlers:
+        return logger
 
-    # Konfiguracja głównego loggera
-    logging.basicConfig(
-        level=logging.INFO,
-        format=log_format,
-        handlers=[
-            logging.FileHandler(log_dir / "bot_log.log", encoding='utf-8'),
-            logging.StreamHandler(sys.stdout)
-        ]
+    # Format logów: [DATA GODZINA] [POZIOM] Treść
+    formatter = logging.Formatter(
+        fmt="[%(asctime)s] [%(levelname)s] %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S"
     )
 
-    # Rekonfiguracja kodowania dla stdout (terminala)
-    sys.stdout.reconfigure(encoding='utf-8')  # Rekonfiguruj stdout dla Pythona 3.7+
+    # 1. Handler Konsoli (to co widzisz na ekranie)
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(logging.INFO)  # Na ekranie tylko ważne info (bez śmieci debugowych)
+    console_handler.setFormatter(formatter)
 
-    # Wycisz zbędne logowanie z bibliotek zewnętrznych
-    logging.getLogger('urllib3').setLevel(logging.WARNING)
-    logging.getLogger('selenium').setLevel(logging.WARNING)
-    logging.getLogger('webdriver_manager').setLevel(logging.WARNING)
+    # 2. Handler Pliku (zapis do pliku)
+    # Tworzymy folder logs jeśli nie istnieje
+    if not os.path.exists("logs"):
+        os.makedirs("logs")
 
+    file_handler = logging.FileHandler("logs/bot_activity.log", encoding="utf-8")
+    file_handler.setLevel(logging.DEBUG)  # W pliku zapisujemy absolutnie wszystko
+    file_handler.setFormatter(formatter)
 
-def get_logger(name):
-    """
-    Zwraca skonfigurowany logger dla danego modułu
+    # Dodajemy handlery do loggera
+    logger.addHandler(console_handler)
+    logger.addHandler(file_handler)
 
-    Args:
-        name: Nazwa modułu, zazwyczaj __name__
-
-    Returns:
-        Logger: Skonfigurowany obiekt logger
-    """
-    # Upewniamy się, że główna konfiguracja została wykonana
-    if not logging.getLogger().handlers:
-        setup_logging()
-
-    # Zwróć logger dla danego modułu
-    logger = logging.getLogger(name)
     return logger
 
 
-# Wykonaj konfigurację podczas importu modułu
-setup_logging()
+# Tworzymy globalną instancję loggera do importowania w innych plikach
+logger = setup_logger()

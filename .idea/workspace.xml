@@ -4,17 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="2b73da6f-b59d-4ae4-908e-c06773e6a83e" name="Changes" comment="V10. Poprawa captcha testowe">
-      <change afterPath="$PROJECT_DIR$/src/.env" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/captcha_solver.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/config.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/exceptions.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/models.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/registration_page.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/test_run.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+    <list default="true" id="2b73da6f-b59d-4ae4-908e-c06773e6a83e" name="Changes" comment="V1.00">
+      <change afterPath="$PROJECT_DIR$/src/check_models.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/logger_config.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/logger_config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/captcha_solver.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/captcha_solver.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/config.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -48,6 +43,7 @@
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "Python.captcha_handler.executor": "Run",
     "Python.chatgpt_captcha_solver.executor": "Run",
+    "Python.check_models.executor": "Run",
     "Python.main.executor": "Run",
     "Python.registration_page.executor": "Run",
     "Python.test_run.executor": "Run",
@@ -151,7 +147,15 @@
       <option name="project" value="LOCAL" />
       <updated>1753781775444</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="V1.00">
+      <option name="closed" value="true" />
+      <created>1766962153351</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1766962153351</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -175,6 +179,7 @@
     <MESSAGE value="V8. Gotowy bot wymaga debugowania" />
     <MESSAGE value="V9. Dodanie CSV i XlSX" />
     <MESSAGE value="V10. Poprawa captcha testowe" />
-    <option name="LAST_COMMIT_MESSAGE" value="V10. Poprawa captcha testowe" />
+    <MESSAGE value="V1.00" />
+    <option name="LAST_COMMIT_MESSAGE" value="V1.00" />
   </component>
 </project>

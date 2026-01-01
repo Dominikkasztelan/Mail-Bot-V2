@@ -2,14 +2,14 @@ import re
 import time
 import random
 import os
-from typing import Callable, Any, Optional
+from typing import Callable, Any
 from playwright.sync_api import Page, Locator, TimeoutError as PlaywrightTimeout
 
 from src.captcha_solver import CaptchaSolver
 from src.config import DELAYS
 from src.models import UserIdentity
 from src.logger_config import get_logger
-from src.exceptions import ElementNotFoundError, CaptchaSolveError
+from src.exceptions import ElementNotFoundError, CaptchaSolveError, RegistrationFailedError
 
 logger = get_logger(__name__)
 
@@ -17,8 +17,8 @@ logger = get_logger(__name__)
 class RegistrationPage:
     """
     Page Object Model dla strony rejestracji.
-    Zawiera logikę obsługi formularza, mechanizmów anty-botowych (Captcha/Zweryfikuj)
-    oraz strategię retry dla niestabilnych elementów.
+    Wersja poprawiona: Obsługa zajętych loginów, walidacji inline oraz
+    zapisywania faktycznej wartości pola login (Single Source of Truth).
     """
 
     def __init__(self, page: Page) -> None:
@@ -35,9 +35,7 @@ class RegistrationPage:
         self.label_gender: Locator = page.get_by_text("Jak się do Ciebie zwracać?")
         self.gender_male: Locator = page.get_by_role("list").filter(has_text="Pan Pani").locator("span").first
 
-        # --- POPRAWKA PRODUKCYJNA (Fix dla dynamicznych ID) ---
-        # Zamiast szukać po ID/klasie, szukamy inputa powiązanego z etykietą "Nazwa konta".
-        # Działa to niezależnie od tego, czy ID to '8wjs8' czy inny hash.
+        # Selektor loginu oparty na etykiecie (niezależny od dynamicznych ID)
         self.input_login: Locator = page.get_by_label("Nazwa konta", exact=False)
 
         self.input_password: Locator = page.get_by_role("textbox", name="Hasło", exact=True)
@@ -53,15 +51,15 @@ class RegistrationPage:
         self.rodo_btn_accept_all: Locator = page.locator(".rodo-popup-agree")
 
         self.captcha_frame_locator: Locator = page.locator("iframe[src*='captcha'], iframe[src*='recaptcha']")
-
-        # Selektory blokady "Zweryfikuj" (zasłaniają formularz)
         self.verify_text: Locator = page.locator("text=Zweryfikuj")
         self.verify_btn: Locator = page.get_by_role("button", name="Zweryfikuj")
 
         self.error_msg: Locator = page.locator(".form-error")
+        # Specyficzny selektor dla błędu loginu (może się różnić w zależności od wersji A/B testów Interii)
+        self.login_error_locator: Locator = page.locator(".input-error-message, .form-error").filter(
+            has_text=re.compile(r"zajęty|istnieje|niedozwolone", re.IGNORECASE))
 
     def _save_debug_screenshot(self, name: str) -> None:
-        """Zapisuje zrzut ekranu w razie błędu do folderu logs."""
         try:
             if not os.path.exists("logs"):
                 os.makedirs("logs")
@@ -73,7 +71,6 @@ class RegistrationPage:
             logger.error(f"Nie udało się zapisać screena: {e}")
 
     def load(self) -> None:
-        """Ładuje stronę i czyści wstępne popupy (RODO)."""
         logger.info("🔄 Otwieram stronę rejestracji...")
         try:
             self.page.goto("https://konto-pocztowe.interia.pl/#/nowe-konto/darmowe", timeout=60000)
@@ -83,18 +80,13 @@ class RegistrationPage:
             logger.error(f"Critical: Nie udało się załadować strony. {e}")
             raise ElementNotFoundError(f"Page load failed: {e}")
 
-    # --- MECHANIKA INTERAKCJI ---
-
     def human_delay(self) -> None:
-        """Symuluje proces myślowy użytkownika."""
         time.sleep(random.uniform(DELAYS.get("THINKING_MIN", 0.1), DELAYS.get("THINKING_MAX", 0.5)))
 
     def section_delay(self) -> None:
-        """Dłuższa przerwa między sekcjami formularza."""
         time.sleep(random.uniform(DELAYS.get("SECTION_PAUSE_MIN", 0.5), DELAYS.get("SECTION_PAUSE_MAX", 1.5)))
 
     def human_type(self, locator: Locator, text: str, use_click: bool = True) -> None:
-        """Wpisuje tekst znak po znaku z losowymi opóźnieniami."""
         try:
             if use_click:
                 locator.scroll_into_view_if_needed()
@@ -103,8 +95,6 @@ class RegistrationPage:
             time.sleep(0.2)
             min_delay_ms = int(DELAYS.get("HUMAN_TYPE_MIN", 0.05) * 1000)
             max_delay_ms = int(DELAYS.get("HUMAN_TYPE_MAX", 0.15) * 1000)
-
-            # press_sequentially jest bardziej naturalne niż fill()
             locator.press_sequentially(text, delay=random.randint(min_delay_ms, max_delay_ms))
             self.human_delay()
         except PlaywrightTimeout:
@@ -112,10 +102,6 @@ class RegistrationPage:
             raise
 
     def handle_captcha_if_present(self) -> bool:
-        """
-        Zwraca True, jeśli napotkano i obsłużono przeszkodę (Captcha lub Zweryfikuj).
-        """
-        # Szybkie sprawdzenie widoczności bez czekania
         has_frame = self.captcha_frame_locator.first.is_visible()
         has_verify_text = self.verify_text.is_visible()
         has_verify_btn = self.verify_btn.is_visible()
@@ -125,7 +111,6 @@ class RegistrationPage:
 
         logger.info("⚠️ Wykryto blokadę (Captcha/Zweryfikuj).")
 
-        # KROK 1: Kliknij "Zweryfikuj", jeśli zasłania
         if has_verify_btn or has_verify_text:
             logger.info("👉 Klikam 'Zweryfikuj', aby odsłonić formularz...")
             try:
@@ -133,11 +118,10 @@ class RegistrationPage:
                     self.verify_btn.click(force=True)
                 else:
                     self.verify_text.click(force=True)
-                time.sleep(2.0)  # Czekamy na animację odsłonięcia
+                time.sleep(2.0)
             except Exception as e:
                 logger.warning(f"Problem z kliknięciem Zweryfikuj: {e}")
 
-        # KROK 2: Obsługa ramek Captcha
         visible_frames = []
         count = self.captcha_frame_locator.count()
         for i in range(count):
@@ -146,12 +130,10 @@ class RegistrationPage:
                 visible_frames.append(frame)
 
         if not visible_frames:
-            # Jeśli kliknęliśmy Zweryfikuj, ale nie ma captchy, to sukces (odblokowano form)
             return True
 
         for frame in visible_frames:
             box = frame.bounding_box()
-            # Filtrujemy małe niewidoczne ramki trackujące
             if box and box['width'] > 150 and box['height'] > 150:
                 logger.warning(f"🚨 CAPTCHA AKTYWNA - Uruchamiam solver.")
                 self.section_delay()
@@ -164,9 +146,7 @@ class RegistrationPage:
         return False
 
     def ensure_path_clear(self) -> bool:
-        """Usuwa RODO i sprawdza Captchę."""
         cleared_something = False
-        # RODO
         for btn in [self.rodo_btn_primary, self.rodo_btn_secondary, self.rodo_btn_accept_all]:
             if btn.is_visible():
                 try:
@@ -183,30 +163,80 @@ class RegistrationPage:
         return cleared_something
 
     def retry_action(self, action_name: str, action_callback: Callable[[], Any], retries: int = 3) -> None:
-        """Ogólny wrapper do ponawiania akcji w razie błędu."""
         for i in range(retries):
-            # Zawsze upewniamy się, że nic nie zasłania (popupy, verify)
             self.ensure_path_clear()
-
             try:
                 action_callback()
                 return
             except Exception as e:
                 msg = str(e)
                 logger.warning(f"⚠️ Retry {i + 1}/{retries} '{action_name}': {msg[:80]}...")
-
-                # Jeśli Playwright twierdzi, że inny element przechwytuje kliknięcie -> ESC
                 if "intercepts" in msg:
                     self.page.keyboard.press("Escape")
-
                 if i == retries - 1:
                     self._save_debug_screenshot(f"fail_{action_name}")
                     raise ElementNotFoundError(f"Failed to perform action: {action_name}") from e
-
                 time.sleep(1.0)
 
+    def _ensure_unique_login(self, identity: UserIdentity) -> None:
+        """
+        Logika biznesowa: Sprawdza czy login jest wolny i ZAPISUJE FAKTYCZNĄ WARTOŚĆ.
+        """
+        max_attempts = 5
+
+        # Upewnij się, że input jest dostępny
+        if not self.input_login.is_visible():
+            if self.verify_btn.is_visible():
+                self.verify_btn.click(force=True)
+            elif self.verify_text.is_visible():
+                self.verify_text.click(force=True)
+
+        self.input_login.wait_for(state="visible", timeout=10000)
+
+        for attempt in range(max_attempts):
+            current_login = identity['login']
+            logger.info(f"📧 Próba loginu ({attempt + 1}/{max_attempts}): {current_login}")
+
+            # Wyczyść i wpisz
+            self.input_login.clear()
+            self.human_type(self.input_login, current_login, use_click=True)
+
+            # Wymuś walidację (kliknij w tło lub Tab)
+            self.page.keyboard.press("Tab")
+            time.sleep(1.5)  # Czas dla Interii na sprawdzenie w bazie
+
+            # --- KLUCZOWA ZMIANA: POBIERZ FAKTYCZNĄ WARTOŚĆ Z INPUTA ---
+            actual_value = self.input_login.input_value()
+
+            # 1. Sprawdź, czy pole nie jest puste (np. strona wyczyściła niedozwolone znaki)
+            if not actual_value.strip():
+                logger.warning("❌ Pole loginu jest PUSTE po walidacji! Generuję nowy...")
+                is_error = True
+            else:
+                # Nadpisujemy tożsamość tym, co faktycznie jest w polu.
+                # To gwarantuje, że zapiszemy dokładnie to, co widzi strona.
+                identity['login'] = actual_value
+                is_error = False
+
+            # 2. Sprawdź komunikaty błędów
+            if self.login_error_locator.first.is_visible():
+                logger.warning(f"❌ Login '{actual_value}' jest ZAJĘTY (wykryto komunikat błędu).")
+                is_error = True
+
+            if is_error:
+                # Generuj nowy login (suffix)
+                suffix = random.randint(10, 999)
+                # Używamy originalnego splitu, żeby nie doklejać suffixów w nieskończoność
+                base_login = current_login.split('.')[0] + "." + current_login.split('.')[1]
+                identity['login'] = f"{base_login}.{suffix}"
+                continue
+            else:
+                logger.info(f"✅ Login '{identity['login']}' zaakceptowany.")
+                return
+
+        raise RegistrationFailedError("Nie udało się znaleźć wolnego loginu po wielu próbach.")
+
     def fill_form(self, identity: UserIdentity) -> None:
-        """Główna logika wypełniania formularza."""
         logger.info(f"📝 Wypełnianie: {identity['first_name']} {identity['last_name']}")
 
         self.retry_action("Imię", lambda: self.human_type(self.input_name, identity['first_name']))
@@ -229,55 +259,13 @@ class RegistrationPage:
         self.retry_action("Płeć", lambda: (self.label_gender.click(), self.gender_male.click()))
         self.section_delay()
 
-        # --- LOGIKA LOGENU (ZAKTUALIZOWANA POD NOWY SELEKTOR) ---
-        def handle_login_click():
-            logger.debug("👉 Próba obsługi pola login (metoda get_by_label)...")
-
-            # 1. Sprawdź czy input jest widoczny. Jeśli nie -> szukaj przycisku blokady.
-            if not self.input_login.is_visible():
-                logger.warning("⚠️ Input loginu ukryty/niedostępny. Szukam 'Zweryfikuj'...")
-                # Próba odsłonięcia formularza
-                if self.verify_btn.is_visible():
-                    self.verify_btn.click(force=True)
-                elif self.verify_text.is_visible():
-                    self.verify_text.click(force=True)
-
-            # 2. Czekamy aż input będzie gotowy (visible + enabled)
-            # Używamy selektora zdefiniowanego w __init__ (opartego na etykiecie)
-            try:
-                self.input_login.wait_for(state="visible", timeout=6000)
-                self.input_login.click()
-            except Exception as e:
-                logger.error(f"Nie udało się kliknąć w pole loginu: {e}")
-                # Ostatnia deska ratunku - dispatch event
-                if self.input_login.count() > 0:
-                    self.input_login.dispatch_event("click")
-                else:
-                    raise
-
-            # 3. Czekamy na skrypty Interii (często generują propozycje maila)
-            time.sleep(2.0)
-
-            # 4. Sprawdzamy czy się wypełniło automagicznie
-            val = self.input_login.input_value()
-            if not val:
-                logger.info("⚠️ Login pusty - wpisuję ręcznie z danych identity.")
-                self.human_type(self.input_login, identity['login'], use_click=True)
-            else:
-                logger.info(f"✅ Interia wygenerowała login: {val}")
-                identity['login'] = val
-
-        self.retry_action("Obsługa loginu", handle_login_click)
+        # --- OBSŁUGA LOGINU ---
+        self.retry_action("Obsługa loginu unikalnego", lambda: self._ensure_unique_login(identity))
 
         self.retry_action("Hasło", lambda: self.human_type(self.input_password, identity['password']))
         self.retry_action("Powtórz hasło", lambda: self.human_type(self.input_password_repeat, identity['password']))
 
-        # Ostateczne upewnienie się przed wysłaniem (Sanity Check)
-        if not self.input_login.input_value():
-            logger.info("⚠️ Doszczelnianie: Uzupełniam brakujący login przed wysyłką.")
-            self.input_login.fill(identity['login'])
-
-        logger.info("✅ Formularz gotowy.")
+        logger.info(f"✅ Formularz gotowy. Ostateczny login (potwierdzony): {identity['login']}")
 
     def accept_terms(self) -> None:
         self.retry_action("Zgody", lambda: self.checkbox_accept_all.click())
@@ -296,6 +284,7 @@ class RegistrationPage:
             if self.error_msg.is_visible():
                 err_text = self.error_msg.first.inner_text()
                 logger.error(f"❌ Błąd formularza widoczny na stronie: {err_text}")
+                self._save_debug_screenshot("verify_fail_msg")
 
-            self._save_debug_screenshot("verify_fail")
+            self._save_debug_screenshot("verify_fail_timeout")
             return False

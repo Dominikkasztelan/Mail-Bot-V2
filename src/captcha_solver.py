@@ -3,7 +3,6 @@ import time
 import random
 import os
 from itertools import cycle
-from playwright.sync_api import Locator
 from google import genai
 from PIL import Image
 from dotenv import load_dotenv
@@ -16,15 +15,14 @@ GEMINI_KEY_POOL = [k.strip() for k in keys_env.split(",") if k.strip()]
 
 if not GEMINI_KEY_POOL:
     single = os.getenv("GEMINI_API_KEY")
-    if single: GEMINI_KEY_POOL = [single]
+    if single:
+        GEMINI_KEY_POOL = [single]
 
 # --- MODELE ---
-# Zmieniamy kolejność na bezpieczniejszą.
-# Najpierw sprawdzony Flash, potem Pro (żeby wykluczyć awarię sieci)
 AVAILABLE_MODELS = [
-    "gemini-2.5-flash",  # Szybki i pewny
-    "gemini-2.5-pro",  # Dokładny, ale wolny
-    "gemini-flash-latest",  # Backup
+    "gemini-2.5-flash",
+    "gemini-2.5-pro",
+    "gemini-flash-latest",
     "gemini-2.0-flash-lite-preview-02-05",
 ]
 
@@ -44,7 +42,8 @@ class CaptchaSolver:
             self._rotate_key()
 
     def _rotate_key(self):
-        if not self.keys_iterator: return
+        if not self.keys_iterator:
+            return
         next_key = next(self.keys_iterator)
         masked = f"...{next_key[-6:]}"
         print(f"🔄 ROTACJA KLUCZA -> Nowy: {masked}")
@@ -91,7 +90,8 @@ class CaptchaSolver:
 
             try:
                 path = "logs/captcha_current.png"
-                if not os.path.exists("logs"): os.makedirs("logs")
+                if not os.path.exists("logs"):
+                    os.makedirs("logs")
 
                 try:
                     tbl = frame.locator("table.rc-imageselect-table").first
@@ -171,6 +171,11 @@ class CaptchaSolver:
         return False
 
     def _ask_gemini_smart(self, path, target):
+        """
+        Wysyła zapytanie do API.
+        POPRAWKA: Usunięto 'enable_http2', które powodowało błąd walidacji.
+        Zostawiono wydłużony timeout.
+        """
         img = Image.open(path)
         prompt = f"""
         Analyze CAPTCHA. Target: '{target}'.
@@ -179,23 +184,29 @@ class CaptchaSolver:
         3. Be conservative. Return list of numbers (1-indexed).
         """
 
+        # --- KONFIGURACJA ---
+        # Zostawiamy tylko timeout, bo 'enable_http2' nie jest wspierane w tym configu
+        http_conf = {
+            'timeout': 60.0,
+        }
+
         for _ in range(2):
-            if not self.client: self._rotate_key()
+            if not self.client:
+                self._rotate_key()
 
             for model_name in AVAILABLE_MODELS:
                 try:
-                    # TIMEOUT ZWIĘKSZONY DO 30s
                     response = self.client.models.generate_content(
                         model=model_name,
                         contents=[prompt, img],
-                        config={'http_options': {'timeout': 30}}
+                        # Przekazujemy tylko dozwolone parametry
+                        config={'http_options': http_conf}
                     )
                     nums = re.findall(r'\d+', response.text)
                     return [int(n) - 1 for n in nums]
 
                 except Exception as e:
                     msg = str(e)
-                    # TERAZ WYPISUJEMY BŁĄD, ZAMIAST GO UKRYWAĆ
                     print(f"   ⚠️ Błąd modelu {model_name}: {msg[:100]}...")
                     continue
 

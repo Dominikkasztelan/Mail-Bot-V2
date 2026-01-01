@@ -61,3 +61,20 @@ DELAYS = {
     "THINKING_MIN": 1.5, "THINKING_MAX": 3.5,
     "SECTION_PAUSE_MIN": 2.0, "SECTION_PAUSE_MAX": 4.0
 }
+
+# --- KONFIGURACJA LOGOWANIA (NOWE) ---
+LOGGING_CONFIG = {
+    "LOG_DIR": "logs",
+    "LOG_FILENAME": "bot_log.log",
+    "MAX_BYTES": 5 * 1024 * 1024,  # 5 MB na plik
+    "BACKUP_COUNT": 3,             # Ilość plików w rotacji
+    "ENCODING": "utf-8",
+    "LEVEL": "INFO"                # Poziom logowania (DEBUG, INFO, WARNING, ERROR)
+}
+
+
+# --- KONFIGURACJA LAUNCHERA ---
+LAUNCHER_CONFIG = {
+    "CONCURRENT_BROWSERS": 3,  # Ilość uruchamianych przeglądarek
+    "STARTUP_DELAY_MULTIPLIER": 2.5  # Opóźnienie startu kolejnych okien (sekundy)
+}

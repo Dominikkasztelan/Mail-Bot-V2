@@ -1,174 +1,205 @@
-import time
-import os
 import re
-import random  # <--- Potrzebne do losowania
+import time
+import random
+import os
+from itertools import cycle
 from playwright.sync_api import Locator
 from google import genai
 from PIL import Image
+from dotenv import load_dotenv
 
-# --- KONFIGURACJA API ---
-# Pamiętaj, że w wersji PRO ten klucz powinien być w src/config.py i .env!
-API_KEY = "AIzaSyDLUNwkH2aZgMzecoek9JO2fMiQlWtG0ws"
+load_dotenv()
+
+# --- KONFIGURACJA KLUCZY ---
+keys_env = os.getenv("GEMINI_KEYS", "")
+GEMINI_KEY_POOL = [k.strip() for k in keys_env.split(",") if k.strip()]
+
+if not GEMINI_KEY_POOL:
+    single = os.getenv("GEMINI_API_KEY")
+    if single: GEMINI_KEY_POOL = [single]
+
+# --- MODELE ---
+# Zmieniamy kolejność na bezpieczniejszą.
+# Najpierw sprawdzony Flash, potem Pro (żeby wykluczyć awarię sieci)
+AVAILABLE_MODELS = [
+    "gemini-2.5-flash",  # Szybki i pewny
+    "gemini-2.5-pro",  # Dokładny, ale wolny
+    "gemini-flash-latest",  # Backup
+    "gemini-2.0-flash-lite-preview-02-05",
+]
+
+print(f"🔧 Załadowano {len(GEMINI_KEY_POOL)} kluczy. Modele: {AVAILABLE_MODELS}")
 
 
 class CaptchaSolver:
     def __init__(self, page):
         self.page = page
+        self.client = None
 
-        # Konfiguracja klienta Gemini
-        # (Tutaj wersja uproszczona, w pełnym projekcie bierzemy z configu)
-        if "TWOJ_KLUCZ" in API_KEY:
-            print("⚠️ OSTRZEŻENIE: Nie podano klucza API Gemini!")
-            self.client = None
+        if not GEMINI_KEY_POOL:
+            print("❌ KRYTYCZNY BŁĄD: Brak kluczy w .env!")
+            self.keys_iterator = None
         else:
-            try:
-                self.client = genai.Client(api_key=API_KEY)
-            except Exception as e:
-                print(f"⚠️ Błąd inicjalizacji klienta Gemini: {e}")
-                self.client = None
+            self.keys_iterator = cycle(GEMINI_KEY_POOL)
+            self._rotate_key()
 
-    def get_captcha_instruction(self, frame_element: Locator):
-        """Pobiera tekst instrukcji z Captchy."""
+    def _rotate_key(self):
+        if not self.keys_iterator: return
+        next_key = next(self.keys_iterator)
+        masked = f"...{next_key[-6:]}"
+        print(f"🔄 ROTACJA KLUCZA -> Nowy: {masked}")
         try:
-            instruction_locator = frame_element.locator(".rc-imageselect-desc-wrapper strong").first
-            if instruction_locator.is_visible():
-                text = instruction_locator.inner_text().strip()
-                print(f"👀 Instrukcja z Captchy: SZUKAMY -> {text}")
-                return text
+            self.client = genai.Client(api_key=next_key)
+        except Exception as e:
+            print(f"⚠️ Błąd inicjalizacji klucza: {e}")
 
-            text = frame_element.locator(".rc-imageselect-instructions").first.inner_text()
-            return text
-        except Exception:
-            # Fallback jeśli nie uda się odczytać
+    def get_captcha_instruction(self, frame):
+        try:
+            elm = frame.locator(".rc-imageselect-desc-wrapper strong").first
+            if elm.is_visible():
+                txt = elm.inner_text().strip()
+                print(f"👀 Cel: {txt}")
+                return txt
+            return frame.locator(".rc-imageselect-instructions").first.inner_text()
+        except:
             return "objects"
 
-    def _human_click(self, tile_locator: Locator):
-        """
-        Klika w losowy punkt wewnątrz elementu, zamiast w środek.
-        Symuluje niedokładność człowieka.
-        """
-        # Pobieramy wymiary elementu
-        box = tile_locator.bounding_box()
-        if not box:
-            tile_locator.click()  # Fallback
-            return
-
-        width = box['width']
-        height = box['height']
-
-        # Definiujemy margines (żeby nie klikać po krawędziach, bo to ryzykowne)
-        margin = min(width, height) * 0.2  # 20% marginesu
-
-        # Losujemy punkt wewnątrz bezpiecznej strefy
-        random_x = random.uniform(margin, width - margin)
-        random_y = random.uniform(margin, height - margin)
-
-        # Wykonujemy kliknięcie z przesunięciem (offsetem)
-        tile_locator.click(position={"x": random_x, "y": random_y})
-
-    def solve_loop(self, captcha_frame: Locator):
-        frame_element = captcha_frame.content_frame
-        tiles = frame_element.locator(".rc-imageselect-tile")
-        verify_btn = frame_element.locator("#recaptcha-verify-button")
-
-        target_name = self.get_captcha_instruction(frame_element)
-
-        attempt = 0
-        max_attempts = 15
-
-        while attempt < max_attempts:
-            attempt += 1
-            print(f"\n🧩 Captcha Loop: Iteracja {attempt} | Cel: {target_name}")
-
-            # Pauza na "analizę wzrokową"
-            time.sleep(random.uniform(1.5, 3.0))
-
-            filename = "current_captcha.png"
-            try:
-                # Robimy screen samej tabelki (lub całej ramki jeśli tabelki nie ma)
-                target_table = frame_element.locator("table.rc-imageselect-table").first
-                if target_table.is_visible():
-                    target_table.screenshot(path=filename)
-                else:
-                    captcha_frame.screenshot(path=filename)
-            except Exception as e:
-                print(f"⚠️ Błąd screenshotu: {e}")
-                break
-
-            targets = self._ask_gemini(filename, target_name)
-
-            if targets:
-                # Mieszamy kolejność klikania (człowiek nie zawsze klika 1, 2, 3 po kolei)
-                random.shuffle(targets)
-
-                for i, target_index in enumerate(targets):
-                    if target_index >= tiles.count():
-                        continue
-
-                    print(f"   👉 Klikam kafelek nr {target_index + 1}")
-                    try:
-                        tile = tiles.nth(target_index)
-
-                        # --- UŻYCIE HUMAN CLICK ---
-                        self._human_click(tile)
-
-                        # Losowa pauza między kliknięciami (bardzo ważne!)
-                        time.sleep(random.uniform(0.3, 0.9))
-
-                    except Exception as e:
-                        print(f"Kliknięcie nieudane: {e}")
-
-                # Czekamy aż animacje znikną (jeśli są nowe obrazki)
-                time.sleep(random.uniform(2.0, 3.5))
-                continue
-
+    def _human_click(self, locator):
+        try:
+            box = locator.bounding_box()
+            if box:
+                m = min(box['width'], box['height']) * 0.2
+                x = random.uniform(m, box['width'] - m)
+                y = random.uniform(m, box['height'] - m)
+                locator.click(position={"x": x, "y": y})
             else:
-                print("   ✅ Klikam 'Zweryfikuj'.")
-                # Klikamy w przycisk też "po ludzku"
-                self._human_click(verify_btn)
+                locator.click()
+        except:
+            pass
 
-                time.sleep(3)
+    def solve_loop(self, captcha_frame):
+        frame = captcha_frame.content_frame
+        tiles = frame.locator(".rc-imageselect-tile")
+        verify_btn = frame.locator("#recaptcha-verify-button")
 
+        target = self.get_captcha_instruction(frame)
+        previous_indices = []
+
+        for i in range(1, 20):
+            print(f"\n🧩 Próba {i} | Cel: {target}")
+            time.sleep(random.uniform(2.5, 4.0))
+
+            try:
+                path = "logs/captcha_current.png"
+                if not os.path.exists("logs"): os.makedirs("logs")
+
+                try:
+                    tbl = frame.locator("table.rc-imageselect-table").first
+                    if tbl.is_visible():
+                        tbl.screenshot(path=path)
+                    else:
+                        captcha_frame.screenshot(path=path)
+                except:
+                    print("⚠️ Błąd zrzutu ekranu.")
+                    break
+
+                # --- STRZAŁ DO GEMINI ---
+                indices = self._ask_gemini_smart(path, target)
+                indices = list(set(indices))
+
+                if len(indices) >= 9:
+                    print(f"⚠️ ALARM: Gemini chce kliknąć {len(indices)} kafelków. Reset.")
+                    self._human_click(verify_btn)
+                    time.sleep(4)
+                    target = self.get_captcha_instruction(frame)
+                    continue
+
+                if indices and (sorted(indices) == sorted(previous_indices)):
+                    print(f"⚠️ ZACIĘCIE! Te same numery. Klikam WERYFIKUJ.")
+                    self._human_click(verify_btn)
+                    previous_indices = []
+                    time.sleep(4)
+                    target = self.get_captcha_instruction(frame)
+                    continue
+
+                previous_indices = indices
+
+                if indices:
+                    random.shuffle(indices)
+                    print(f"   🤖 Gemini wskazał: {indices}")
+
+                    for idx in indices:
+                        if idx < tiles.count():
+                            self._human_click(tiles.nth(idx))
+                            time.sleep(random.uniform(0.5, 1.0))
+
+                    print("   🕵️ Analiza po kliknięciu...")
+                    time.sleep(2.5)
+
+                    selected_tiles = frame.locator(".rc-imageselect-tileselected").count()
+
+                    if selected_tiles > 0:
+                        print(f"   🛑 Wykryto {selected_tiles} zaznaczonych. STATYCZNA -> WERYFIKUJ.")
+                        self._human_click(verify_btn)
+                    else:
+                        print("   🌊 Kafelki zniknęły. DYNAMICZNA -> Czekam...")
+                        if i >= 8:
+                            print("   😤 Za długo. Ryzykuję WERYFIKACJĘ.")
+                            self._human_click(verify_btn)
+                        else:
+                            continue
+
+                else:
+                    print("   ✅ Brak celów (wg Gemini) -> Klikam 'Zweryfikuj'.")
+                    self._human_click(verify_btn)
+
+                time.sleep(5)
                 if not captcha_frame.is_visible():
                     print("🎉 SUKCES! Captcha zniknęła.")
                     return True
 
-                error_msg = frame_element.locator(".rc-imageselect-error-select-more").first
-                if error_msg.is_visible():
-                    print("   🔄 'Wybierz więcej'. Wracam do pętli.")
+                if frame.locator(".rc-imageselect-error-select-more").is_visible():
+                    print("   🔄 'Wybierz więcej'...")
                     continue
 
-                print("   🔄 Captcha przeładowała się (nowe zadanie?).")
-                target_name = self.get_captcha_instruction(frame_element)
-                time.sleep(1)
+                target = self.get_captcha_instruction(frame)
 
-        print("❌ Przekroczono limit prób.")
+            except Exception as e:
+                print(f"❌ Błąd w pętli: {e}")
+                break
+
         return False
 
-    def _ask_gemini(self, image_path, target_name):
-        if not self.client:
-            return []
+    def _ask_gemini_smart(self, path, target):
+        img = Image.open(path)
+        prompt = f"""
+        Analyze CAPTCHA. Target: '{target}'.
+        1. If Dynamic (grid), ignore white/loading tiles.
+        2. If Static (single image), ignore checked tiles.
+        3. Be conservative. Return list of numbers (1-indexed).
+        """
 
-        try:
-            img = Image.open(image_path)
-            # Prompt bez zmian
-            prompt = f"""
-            Look at this CAPTCHA grid. Find all tiles containing: "{target_name}".
-            Assume a standard numbered grid (1-9 for 3x3, 1-16 for 4x4).
-            Return ONLY a Python list of numbers, e.g., [1, 5, 9].
-            If none, return [].
-            """
+        for _ in range(2):
+            if not self.client: self._rotate_key()
 
-            # Pamiętaj o ustawieniu modelu, który działa u Ciebie (np. gemini-2.0-flash)
-            response = self.client.models.generate_content(
-                model='gemini-2.0-flash',
-                contents=[prompt, img]
-            )
+            for model_name in AVAILABLE_MODELS:
+                try:
+                    # TIMEOUT ZWIĘKSZONY DO 30s
+                    response = self.client.models.generate_content(
+                        model=model_name,
+                        contents=[prompt, img],
+                        config={'http_options': {'timeout': 30}}
+                    )
+                    nums = re.findall(r'\d+', response.text)
+                    return [int(n) - 1 for n in nums]
 
-            numbers = re.findall(r'\d+', response.text)
-            indices = [int(n) - 1 for n in numbers]
-            return indices
+                except Exception as e:
+                    msg = str(e)
+                    # TERAZ WYPISUJEMY BŁĄD, ZAMIAST GO UKRYWAĆ
+                    print(f"   ⚠️ Błąd modelu {model_name}: {msg[:100]}...")
+                    continue
 
-        except Exception as e:
-            print(f"   ⚠️ Błąd API: {e}")
-            return []
+            print("⚡ Żaden model nie odpowiedział. Rotacja klucza...")
+            self._rotate_key()
+
+        return []

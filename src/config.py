@@ -46,7 +46,7 @@ GENERATOR_CONFIG = {
 }
 
 # --- SEKRETY (BEZPIECZNE) ---
-# To jest ta część, której brakowało w Twoim pliku src/config.py!
+
 API_KEYS = {
     "GEMINI": os.getenv("GEMINI_API_KEY")
 }

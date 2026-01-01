@@ -82,20 +82,30 @@ def run() -> None:
             bot.accept_terms()
             bot.submit()
 
-            logger.info("✅ SUKCES! Formularz wysłany.")
-            save_credentials(identity)
+            # --- NOWA SEKCJA WERYFIKACJI I OPÓŹNIENIA ---
+            if bot.verify_success():
+                logger.info("✅ KONTO UTWORZONE I ZWERYFIKOWANE!")
+                save_credentials(identity)
+
+                # Oczekiwanie 4-11 sekund przed zamknięciem
+                wait_time = random.uniform(4.0, 11.0)
+                logger.info(f"👀 Oglądam skrzynkę przez {wait_time:.1f} sekund...")
+                page.wait_for_timeout(wait_time * 1000)
+            else:
+                logger.error("❌ Formularz wysłany, ale nie wykryto wejścia do skrzynki.")
+                page.screenshot(path="logs/error_final.png")
 
         # --- SEKCJA OBSŁUGI BŁĘDÓW ---
         except CaptchaSolveError:
             logger.critical("🤖 CRITICAL: Polegliśmy na Captchy. Zalecana zmiana IP!")
-            # Tu mógłbyś np. uruchomić kod resetujący router
         except ElementNotFoundError as e:
             logger.error(f"🔍 BŁĄD STRONY: {e}. Interia mogła zmienić kod HTML.")
         except Exception as e:
             logger.critical(f"💥 BŁĄD NIEZNANY: {e}. Sprawdź logi.")
+            page.screenshot(path="logs/error_exception.png")
         finally:
             logger.info("⏸️ Zamykanie sesji...")
-            page.wait_for_timeout(3000)
+            # Tutaj kontekst 'with' automatycznie zamknie przeglądarkę
 
 
 if __name__ == "__main__":

@@ -16,7 +16,7 @@ from src.logger_config import get_logger
 logger = get_logger("Farmer")
 
 # KONFIGURACJA FARMERA
-MAX_POOL_SIZE = 20
+MAX_POOL_SIZE = 30
 FARMER_HEADLESS = False  # Ustaw True na produkcji (VPS)
 
 

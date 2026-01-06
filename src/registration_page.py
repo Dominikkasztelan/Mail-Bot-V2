@@ -1,8 +1,9 @@
+# src/registration_page.py
 import re
 import time
 import random
 import os
-from typing import Callable, Any
+from typing import Callable, Any, Dict
 from playwright.sync_api import Page, Locator, TimeoutError as PlaywrightTimeout
 
 from src.captcha_solver import CaptchaSolver
@@ -17,15 +18,14 @@ logger = get_logger(__name__)
 class RegistrationPage:
     """
     Page Object Model dla strony rejestracji.
-    Wersja poprawiona: Obsługa zajętych loginów, walidacji inline oraz
-    zapisywania faktycznej wartości pola login (Single Source of Truth).
+    Przywrócono wersję ROBUST (z obsługą retry, get_by_role i poprawnym URL).
     """
 
     def __init__(self, page: Page) -> None:
         self.page: Page = page
         self.solver: CaptchaSolver = CaptchaSolver(page)
 
-        # --- SELEKTORY FORMULARZA ---
+        # --- SELEKTORY (Twoje oryginalne - najlepsze) ---
         self.input_name: Locator = page.get_by_role("textbox", name="Imię")
         self.input_surname: Locator = page.get_by_role("textbox", name="Nazwisko")
         self.input_day: Locator = page.get_by_role("textbox", name="Dzień")
@@ -35,7 +35,7 @@ class RegistrationPage:
         self.label_gender: Locator = page.get_by_text("Jak się do Ciebie zwracać?")
         self.gender_male: Locator = page.get_by_role("list").filter(has_text="Pan Pani").locator("span").first
 
-        # Selektor loginu oparty na etykiecie (niezależny od dynamicznych ID)
+        # Selektor loginu oparty na etykiecie
         self.input_login: Locator = page.get_by_label("Nazwa konta", exact=False)
 
         self.input_password: Locator = page.get_by_role("textbox", name="Hasło", exact=True)
@@ -45,7 +45,7 @@ class RegistrationPage:
             has_text=re.compile(r"^Akceptuję i zaznaczam wszystkie poniższe zgody$")).first
         self.btn_submit: Locator = page.get_by_role("button", name="Załóż darmowe konto")
 
-        # --- PRZESZKADZAJKI I OBSŁUGA BŁĘDÓW ---
+        # --- PRZESZKADZAJKI (RODO) ---
         self.rodo_btn_primary: Locator = page.get_by_role("button", name="Przejdź do serwisu")
         self.rodo_btn_secondary: Locator = page.get_by_role("button", name="Zgoda")
         self.rodo_btn_accept_all: Locator = page.locator(".rodo-popup-agree")
@@ -55,7 +55,6 @@ class RegistrationPage:
         self.verify_btn: Locator = page.get_by_role("button", name="Zweryfikuj")
 
         self.error_msg: Locator = page.locator(".form-error")
-        # Specyficzny selektor dla błędu loginu (może się różnić w zależności od wersji A/B testów Interii)
         self.login_error_locator: Locator = page.locator(".input-error-message, .form-error").filter(
             has_text=re.compile(r"zajęty|istnieje|niedozwolone", re.IGNORECASE))
 
@@ -71,7 +70,8 @@ class RegistrationPage:
             logger.error(f"Nie udało się zapisać screena: {e}")
 
     def load(self) -> None:
-        logger.info("🔄 Otwieram stronę rejestracji...")
+        # PRZYWRÓCONO: Poprawny URL do nowej wersji formularza
+        logger.info("🔄 Otwieram stronę rejestracji (Nowy Layout)...")
         try:
             self.page.goto("https://konto-pocztowe.interia.pl/#/nowe-konto/darmowe", timeout=60000)
             self.page.wait_for_load_state("domcontentloaded")
@@ -122,6 +122,7 @@ class RegistrationPage:
             except Exception as e:
                 logger.warning(f"Problem z kliknięciem Zweryfikuj: {e}")
 
+        # Szukanie ramek captchy
         visible_frames = []
         count = self.captcha_frame_locator.count()
         for i in range(count):
@@ -137,6 +138,7 @@ class RegistrationPage:
             if box and box['width'] > 150 and box['height'] > 150:
                 logger.warning(f"🚨 CAPTCHA AKTYWNA - Uruchamiam solver.")
                 self.section_delay()
+                # UWAGA: Używamy solve_loop (zgodnie z Twoim plikiem captcha_solver.py)
                 if self.solver.solve_loop(frame):
                     logger.info("✅ Captcha pokonana.")
                     return True
@@ -146,13 +148,18 @@ class RegistrationPage:
         return False
 
     def ensure_path_clear(self) -> bool:
+        """
+        Zamyka RODO i inne przeszkadzajki.
+        To tutaj jest klucz do sukcesu - Twój stary kod robił to lepiej.
+        """
         cleared_something = False
         for btn in [self.rodo_btn_primary, self.rodo_btn_secondary, self.rodo_btn_accept_all]:
             if btn.is_visible():
                 try:
+                    logger.info(f"🍪 Zamykam RODO przyciskiem: {btn}")
                     btn.click()
                     cleared_something = True
-                    time.sleep(0.5)
+                    time.sleep(1.0)  # Dajmy czas na animację znikania
                     break
                 except Exception:
                     pass
@@ -163,7 +170,11 @@ class RegistrationPage:
         return cleared_something
 
     def retry_action(self, action_name: str, action_callback: Callable[[], Any], retries: int = 3) -> None:
+        """
+        Mechanizm ponawiania akcji w razie zasłonięcia elementu (np. przez RODO).
+        """
         for i in range(retries):
+            # Przed każdą próbą upewniamy się, że droga jest czysta
             self.ensure_path_clear()
             try:
                 action_callback()
@@ -171,17 +182,17 @@ class RegistrationPage:
             except Exception as e:
                 msg = str(e)
                 logger.warning(f"⚠️ Retry {i + 1}/{retries} '{action_name}': {msg[:80]}...")
+
+                # Jeśli to Playwright intercept, spróbuj uciec (Escape)
                 if "intercepts" in msg:
                     self.page.keyboard.press("Escape")
+
                 if i == retries - 1:
                     self._save_debug_screenshot(f"fail_{action_name}")
                     raise ElementNotFoundError(f"Failed to perform action: {action_name}") from e
                 time.sleep(1.0)
 
-    def _ensure_unique_login(self, identity: UserIdentity) -> None:
-        """
-        Logika biznesowa: Sprawdza czy login jest wolny i ZAPISUJE FAKTYCZNĄ WARTOŚĆ.
-        """
+    def _ensure_unique_login(self, identity: Dict[str, Any]) -> None:
         max_attempts = 5
 
         # Upewnij się, że input jest dostępny
@@ -197,37 +208,33 @@ class RegistrationPage:
             current_login = identity['login']
             logger.info(f"📧 Próba loginu ({attempt + 1}/{max_attempts}): {current_login}")
 
-            # Wyczyść i wpisz
             self.input_login.clear()
             self.human_type(self.input_login, current_login, use_click=True)
 
-            # Wymuś walidację (kliknij w tło lub Tab)
             self.page.keyboard.press("Tab")
-            time.sleep(1.5)  # Czas dla Interii na sprawdzenie w bazie
+            time.sleep(1.5)
 
-            # --- KLUCZOWA ZMIANA: POBIERZ FAKTYCZNĄ WARTOŚĆ Z INPUTA ---
             actual_value = self.input_login.input_value()
 
-            # 1. Sprawdź, czy pole nie jest puste (np. strona wyczyściła niedozwolone znaki)
             if not actual_value.strip():
                 logger.warning("❌ Pole loginu jest PUSTE po walidacji! Generuję nowy...")
                 is_error = True
             else:
-                # Nadpisujemy tożsamość tym, co faktycznie jest w polu.
-                # To gwarantuje, że zapiszemy dokładnie to, co widzi strona.
                 identity['login'] = actual_value
                 is_error = False
 
-            # 2. Sprawdź komunikaty błędów
             if self.login_error_locator.first.is_visible():
-                logger.warning(f"❌ Login '{actual_value}' jest ZAJĘTY (wykryto komunikat błędu).")
+                logger.warning(f"❌ Login '{actual_value}' jest ZAJĘTY.")
                 is_error = True
 
             if is_error:
-                # Generuj nowy login (suffix)
                 suffix = random.randint(10, 999)
-                # Używamy originalnego splitu, żeby nie doklejać suffixów w nieskończoność
-                base_login = current_login.split('.')[0] + "." + current_login.split('.')[1]
+                try:
+                    base_parts = current_login.split('.')
+                    base_login = f"{base_parts[0]}.{base_parts[1]}"
+                except IndexError:
+                    base_login = current_login[:10]
+
                 identity['login'] = f"{base_login}.{suffix}"
                 continue
             else:
@@ -236,9 +243,13 @@ class RegistrationPage:
 
         raise RegistrationFailedError("Nie udało się znaleźć wolnego loginu po wielu próbach.")
 
-    def fill_form(self, identity: UserIdentity) -> None:
+    def fill_form(self, identity: Dict[str, Any]) -> None:
+        """
+        Główna metoda wypełniania. Przyjmuje słownik z identity_manager.
+        """
         logger.info(f"📝 Wypełnianie: {identity['first_name']} {identity['last_name']}")
 
+        # Używamy retry_action, które samo czyści RODO w razie błędu!
         self.retry_action("Imię", lambda: self.human_type(self.input_name, identity['first_name']))
         self.page.keyboard.press("Tab")
         self.retry_action("Nazwisko",
@@ -259,13 +270,12 @@ class RegistrationPage:
         self.retry_action("Płeć", lambda: (self.label_gender.click(), self.gender_male.click()))
         self.section_delay()
 
-        # --- OBSŁUGA LOGINU ---
         self.retry_action("Obsługa loginu unikalnego", lambda: self._ensure_unique_login(identity))
 
         self.retry_action("Hasło", lambda: self.human_type(self.input_password, identity['password']))
         self.retry_action("Powtórz hasło", lambda: self.human_type(self.input_password_repeat, identity['password']))
 
-        logger.info(f"✅ Formularz gotowy. Ostateczny login (potwierdzony): {identity['login']}")
+        logger.info(f"✅ Formularz gotowy. Ostateczny login: {identity['login']}")
 
     def accept_terms(self) -> None:
         self.retry_action("Zgody", lambda: self.checkbox_accept_all.click())

@@ -12,3 +12,4 @@ class UserIdentity(TypedDict):
     birth_year: str
     password: str
     login: str
+    domain: str

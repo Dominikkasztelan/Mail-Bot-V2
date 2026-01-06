@@ -1,13 +1,23 @@
+import os
 import re
 import time
 import random
-import os
 from itertools import cycle
-from google import genai
 from PIL import Image
 from dotenv import load_dotenv
 
+# --- FIX PRODUKCYJNY SIECI (Musi być na samej górze) ---
+# Czyścimy systemowe zmienne proxy, które blokują bibliotekę google-genai (httpx) na Windows.
+# Dzięki temu bot ignoruje VPN-y systemowe/śmieci w konfigu i łączy się bezpośrednio.
+for key in ['http_proxy', 'https_proxy', 'HTTP_PROXY', 'HTTPS_PROXY', 'all_proxy', 'ALL_PROXY']:
+    os.environ.pop(key, None)
+
+# Dopiero teraz importujemy biblioteki sieciowe
+from google import genai
+from src.logger_config import get_logger
+
 load_dotenv()
+logger = get_logger(__name__)
 
 # --- KONFIGURACJA KLUCZY ---
 keys_env = os.getenv("GEMINI_KEYS", "")
@@ -26,7 +36,7 @@ AVAILABLE_MODELS = [
     "gemini-2.0-flash-lite-preview-02-05",
 ]
 
-print(f"🔧 Załadowano {len(GEMINI_KEY_POOL)} kluczy. Modele: {AVAILABLE_MODELS}")
+logger.info(f"🔧 Załadowano {len(GEMINI_KEY_POOL)} kluczy. Modele: {AVAILABLE_MODELS}")
 
 
 class CaptchaSolver:
@@ -35,7 +45,7 @@ class CaptchaSolver:
         self.client = None
 
         if not GEMINI_KEY_POOL:
-            print("❌ KRYTYCZNY BŁĄD: Brak kluczy w .env!")
+            logger.critical("❌ KRYTYCZNY BŁĄD: Brak kluczy w .env!")
             self.keys_iterator = None
         else:
             self.keys_iterator = cycle(GEMINI_KEY_POOL)
@@ -46,18 +56,23 @@ class CaptchaSolver:
             return
         next_key = next(self.keys_iterator)
         masked = f"...{next_key[-6:]}"
-        print(f"🔄 ROTACJA KLUCZA -> Nowy: {masked}")
+        logger.info(f"🔄 ROTACJA KLUCZA -> Nowy: {masked}")
         try:
-            self.client = genai.Client(api_key=next_key)
+            # --- KONFIGURACJA KLIENTA (PRO) ---
+            # Timeout 60s ustawiony globalnie dla klienta zapewnia stabilność handshake'u SSL.
+            self.client = genai.Client(
+                api_key=next_key,
+                http_options={'timeout': 60.0}
+            )
         except Exception as e:
-            print(f"⚠️ Błąd inicjalizacji klucza: {e}")
+            logger.error(f"⚠️ Błąd inicjalizacji klienta: {e}")
 
     def get_captcha_instruction(self, frame):
         try:
             elm = frame.locator(".rc-imageselect-desc-wrapper strong").first
             if elm.is_visible():
                 txt = elm.inner_text().strip()
-                print(f"👀 Cel: {txt}")
+                logger.info(f"👀 Cel: {txt}")
                 return txt
             return frame.locator(".rc-imageselect-instructions").first.inner_text()
         except:
@@ -85,7 +100,7 @@ class CaptchaSolver:
         previous_indices = []
 
         for i in range(1, 20):
-            print(f"\n🧩 Próba {i} | Cel: {target}")
+            logger.info(f"🧩 Próba {i} | Cel: {target}")
             time.sleep(random.uniform(2.5, 4.0))
 
             try:
@@ -100,22 +115,30 @@ class CaptchaSolver:
                     else:
                         captcha_frame.screenshot(path=path)
                 except:
-                    print("⚠️ Błąd zrzutu ekranu.")
+                    logger.warning("⚠️ Błąd zrzutu ekranu.")
                     break
 
                 # --- STRZAŁ DO GEMINI ---
-                indices = self._ask_gemini_smart(path, target)
-                indices = list(set(indices))
+                raw_indices = self._ask_gemini_smart(path, target)
+
+                # --- SAFEGUARD: AWARIA SIECI ---
+                # Jeśli API zwróciło None (błąd połączenia), nie klikamy nic.
+                if raw_indices is None:
+                    logger.warning("⛔ API zwróciło błąd (None). Pomijam klikanie, próbuję ponownie...")
+                    time.sleep(2.0)
+                    continue
+
+                indices = list(set(raw_indices))
 
                 if len(indices) >= 9:
-                    print(f"⚠️ ALARM: Gemini chce kliknąć {len(indices)} kafelków. Reset.")
+                    logger.warning(f"⚠️ ALARM: Gemini chce kliknąć {len(indices)} kafelków. Reset.")
                     self._human_click(verify_btn)
                     time.sleep(4)
                     target = self.get_captcha_instruction(frame)
                     continue
 
                 if indices and (sorted(indices) == sorted(previous_indices)):
-                    print(f"⚠️ ZACIĘCIE! Te same numery. Klikam WERYFIKUJ.")
+                    logger.warning(f"⚠️ ZACIĘCIE! Te same numery. Klikam WERYFIKUJ.")
                     self._human_click(verify_btn)
                     previous_indices = []
                     time.sleep(4)
@@ -126,56 +149,51 @@ class CaptchaSolver:
 
                 if indices:
                     random.shuffle(indices)
-                    print(f"   🤖 Gemini wskazał: {indices}")
+                    logger.info(f"🤖 Gemini wskazał: {indices}")
 
                     for idx in indices:
                         if idx < tiles.count():
                             self._human_click(tiles.nth(idx))
                             time.sleep(random.uniform(0.5, 1.0))
 
-                    print("   🕵️ Analiza po kliknięciu...")
+                    logger.info("🕵️ Analiza po kliknięciu...")
                     time.sleep(2.5)
 
                     selected_tiles = frame.locator(".rc-imageselect-tileselected").count()
 
                     if selected_tiles > 0:
-                        print(f"   🛑 Wykryto {selected_tiles} zaznaczonych. STATYCZNA -> WERYFIKUJ.")
+                        logger.info(f"🛑 Wykryto {selected_tiles} zaznaczonych. STATYCZNA -> WERYFIKUJ.")
                         self._human_click(verify_btn)
                     else:
-                        print("   🌊 Kafelki zniknęły. DYNAMICZNA -> Czekam...")
+                        logger.info("🌊 Kafelki zniknęły. DYNAMICZNA -> Czekam...")
                         if i >= 8:
-                            print("   😤 Za długo. Ryzykuję WERYFIKACJĘ.")
+                            logger.warning("😤 Za długo. Ryzykuję WERYFIKACJĘ.")
                             self._human_click(verify_btn)
                         else:
                             continue
 
                 else:
-                    print("   ✅ Brak celów (wg Gemini) -> Klikam 'Zweryfikuj'.")
+                    logger.info("✅ Brak celów (wg Gemini) -> Klikam 'Zweryfikuj'.")
                     self._human_click(verify_btn)
 
                 time.sleep(5)
                 if not captcha_frame.is_visible():
-                    print("🎉 SUKCES! Captcha zniknęła.")
+                    logger.info("🎉 SUKCES! Captcha zniknęła.")
                     return True
 
                 if frame.locator(".rc-imageselect-error-select-more").is_visible():
-                    print("   🔄 'Wybierz więcej'...")
+                    logger.info("🔄 'Wybierz więcej'...")
                     continue
 
                 target = self.get_captcha_instruction(frame)
 
             except Exception as e:
-                print(f"❌ Błąd w pętli: {e}")
+                logger.error(f"❌ Błąd w pętli: {e}")
                 break
 
         return False
 
     def _ask_gemini_smart(self, path, target):
-        """
-        Wysyła zapytanie do API.
-        POPRAWKA: Usunięto 'enable_http2', które powodowało błąd walidacji.
-        Zostawiono wydłużony timeout.
-        """
         img = Image.open(path)
         prompt = f"""
         Analyze CAPTCHA. Target: '{target}'.
@@ -183,12 +201,6 @@ class CaptchaSolver:
         2. If Static (single image), ignore checked tiles.
         3. Be conservative. Return list of numbers (1-indexed).
         """
-
-        # --- KONFIGURACJA ---
-        # Zostawiamy tylko timeout, bo 'enable_http2' nie jest wspierane w tym configu
-        http_conf = {
-            'timeout': 60.0,
-        }
 
         for _ in range(2):
             if not self.client:
@@ -198,19 +210,17 @@ class CaptchaSolver:
                 try:
                     response = self.client.models.generate_content(
                         model=model_name,
-                        contents=[prompt, img],
-                        # Przekazujemy tylko dozwolone parametry
-                        config={'http_options': http_conf}
+                        contents=[prompt, img]
                     )
                     nums = re.findall(r'\d+', response.text)
                     return [int(n) - 1 for n in nums]
 
                 except Exception as e:
                     msg = str(e)
-                    print(f"   ⚠️ Błąd modelu {model_name}: {msg[:100]}...")
+                    logger.warning(f"⚠️ Błąd modelu {model_name}: {msg}")
                     continue
 
-            print("⚡ Żaden model nie odpowiedział. Rotacja klucza...")
+            logger.error("⚡ Żaden model nie odpowiedział. Rotacja klucza...")
             self._rotate_key()
 
-        return []
+        return None

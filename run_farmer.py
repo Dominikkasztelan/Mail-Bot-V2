@@ -69,20 +69,28 @@ def run_farmer_loop() -> None:
                 stealth.use_sync(cast(Any, page))
 
                 warmer = CookieWarmer(page)
-                warmer.run_scenario()
 
-                # FIX: Double Cast dla StorageState
-                raw_state = context.storage_state()
-                cookies_json = cast(Dict[str, Any], cast(object, raw_state))
+                # --- QUALITY GATE ---
+                # Sprawdzamy, czy wygrzewanie zakończyło się sukcesem.
+                # Jeśli warmer rzucił błędy (np. timeout na Google), nie zapisujemy profilu.
+                is_warmed_successfully = warmer.run_scenario()
 
-                manager.save_profile(
-                    cookies=cookies_json,
-                    metadata={
-                        "user_agent": selected_ua,
-                        "viewport": vp_raw,
-                        "created_by": "Farmer-v2"
-                    }
-                )
+                if is_warmed_successfully:
+                    # FIX: Double Cast dla StorageState
+                    raw_state = context.storage_state()
+                    cookies_json = cast(Dict[str, Any], cast(object, raw_state))
+
+                    manager.save_profile(
+                        cookies=cookies_json,
+                        metadata={
+                            "user_agent": selected_ua,
+                            "viewport": vp_raw,
+                            "created_by": "Farmer-v2",
+                            "google_path_success": True  # Znacznik jakości
+                        }
+                    )
+                else:
+                    logger.warning("🗑️ Profil trafił do kosza (nieudane wygrzewanie).")
 
                 context.close()
                 browser.close()

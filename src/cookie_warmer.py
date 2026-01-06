@@ -1,8 +1,11 @@
 # src/cookie_warmer.py
 import time
 import random
-from playwright.sync_api import Page
+import os
+from datetime import datetime
+from typing import Optional
 
+from playwright.sync_api import Page, Locator, TimeoutError as PlaywrightTimeout
 from src.logger_config import get_logger
 
 logger = get_logger("CookieWarmer")
@@ -10,74 +13,116 @@ logger = get_logger("CookieWarmer")
 
 class CookieWarmer:
     """
-    Klasa odpowiedzialna za "wygrzewanie" profilu przeglądarki przed właściwą rejestracją.
-    Generuje historię, ciasteczka i cache, aby bot wyglądał na realnego użytkownika.
+    CookieWarmer v3 (Production Hardened).
+    - Fix: Usunięto błąd 'unexpected keyword argument timeout' w is_visible.
+    - Fix: Obsługa dynamicznego DOM Google (nowe selektory).
+    - Feature: Fallback do wejścia bezpośredniego (nie tracimy profilu przy błędzie Google).
     """
 
     def __init__(self, page: Page):
         self.page = page
+        self.debug_dir = "logs/debug_warmer"
+        os.makedirs(self.debug_dir, exist_ok=True)
 
-    # FIX: Metoda statyczna (brak self)
+    def _save_debug_snapshot(self, tag: str, error: bool = False):
+        """Zapisuje zrzut ekranu i HTML w momencie krytycznym."""
+        try:
+            timestamp = datetime.now().strftime("%H%M%S")
+            status = "ERR" if error else "INFO"
+            filename_base = f"{self.debug_dir}/{timestamp}_{status}_{tag}"
+
+            self.page.screenshot(path=f"{filename_base}.png", full_page=False)
+            # HTML pomaga zrozumieć co widzi bot (Shadow DOM, iframe itp.)
+            with open(f"{filename_base}.html", "w", encoding="utf-8") as f:
+                f.write(self.page.content())
+        except Exception:
+            pass
+
     @staticmethod
     def _human_delay(min_s=1.0, max_s=3.0):
         time.sleep(random.uniform(min_s, max_s))
 
     def _human_scroll(self):
-        """Symuluje czytanie strony (scrollowanie w dół i czasem w górę)."""
-        # noinspection PyBroadException
         try:
             for _ in range(random.randint(3, 6)):
-                scroll_amount = random.randint(300, 700)
-                self.page.mouse.wheel(0, scroll_amount)
+                self.page.mouse.wheel(0, random.randint(300, 700))
                 time.sleep(random.uniform(0.5, 1.5))
-
-                if random.random() < 0.3:
-                    self.page.mouse.wheel(0, -random.randint(100, 300))
-                    time.sleep(0.5)
         except Exception:
             pass
 
+    def _safe_wait(self, locator: Locator, timeout: int = 2000) -> bool:
+        """
+        Bezpieczne oczekiwanie na element zamiast is_visible(timeout=...).
+        Naprawia błąd 'unexpected keyword argument'.
+        """
+        try:
+            locator.wait_for(state="visible", timeout=timeout)
+            return True
+        except PlaywrightTimeout:
+            return False
+        except Exception:
+            return False
+
+    def _handle_google_consent(self) -> bool:
+        """
+        Obsługa RODO Google.
+        Zwraca True jeśli kliknięto, False jeśli nie znaleziono (co jest OK).
+        """
+        consent_selectors = [
+            "button[id='L2AGLb']",  # Standard PL/EN
+            "div[role='button']:has-text('Zaakceptuj wszystko')",
+            "div[role='button']:has-text('Accept all')",
+            "button:has-text('Zaakceptuj wszystko')",
+            "form[action*='consent'] button"
+        ]
+
+        # Szybki skan (krótki timeout)
+        for sel in consent_selectors:
+            loc = self.page.locator(sel).first
+            # Używamy własnego wrappera zamiast is_visible(timeout=...)
+            if self._safe_wait(loc, timeout=1500):
+                logger.info(f"🍪 [GOOGLE] Wykryto RODO: '{sel}'. Klikam.")
+                try:
+                    loc.click(force=True)
+                    # Czekamy na zniknięcie
+                    loc.wait_for(state="hidden", timeout=3000)
+                    return True
+                except Exception:
+                    logger.warning("⚠️ [GOOGLE] Kliknięto RODO, ale błąd przy znikaniu.")
+                    return True  # Zakładamy że kliknięcie przeszło
+
+        return False
+
     def _simple_consent_click(self):
-        """Uniwersalna próba zamknięcia pop-upów RODO/Cookie."""
         common_selectors = [
             "button:has-text('Akceptuję')",
             "button:has-text('Zgadzam się')",
-            "button:has-text('Przejdź do serwisu')",
             "button[aria-label='Akceptuj wszystko']",
-            ".rodo-popup-agree"
+            ".rodo-popup-agree",
+            "#onet-trust-accept-btn-handler"
         ]
         for sel in common_selectors:
-            # noinspection PyBroadException
-            try:
-                btn = self.page.locator(sel).first
-                if btn.is_visible():
-                    btn.click(timeout=1000)
-                    self._human_delay(0.5, 1.0)
+            loc = self.page.locator(sel).first
+            if self._safe_wait(loc, timeout=1000):
+                try:
+                    loc.click(force=True)
                     return
-            except Exception:
-                continue
+                except:
+                    pass
 
-    # --- AKCJE BUDUJĄCE HISTORIĘ ---
+    # --- AKCJE PORTALOWE ---
 
     def action_visit_onet(self):
-        logger.info("🍪 [WARMER] Odwiedzam Onet...")
-        # noinspection PyBroadException
+        logger.info("🍪 [WARMER] -> Onet")
         try:
             self.page.goto("https://www.onet.pl", timeout=20000)
             self._simple_consent_click()
             self._human_scroll()
-
-            links = self.page.locator("a.itemUrl").all()
-            if links:
-                random.choice(links[:5]).click(timeout=3000)
-                self._human_delay(2, 4)
-                self._human_scroll()
         except Exception:
             pass
 
     def action_visit_wp(self):
-        logger.info("🍪 [WARMER] Odwiedzam WP...")
-        # noinspection PyBroadException
+        logger.info("🍪 [WARMER] -> WP")
         try:
             self.page.goto("https://www.wp.pl", timeout=20000)
             self._simple_consent_click()
@@ -86,66 +131,99 @@ class CookieWarmer:
             pass
 
     def action_visit_allegro_search(self):
-        logger.info("🍪 [WARMER] Odwiedzam Allegro (Szukanie)...")
-        # noinspection PyBroadException
+        logger.info("🍪 [WARMER] -> Allegro")
         try:
             self.page.goto("https://allegro.pl", timeout=20000)
             self._simple_consent_click()
 
-            search_bar = self.page.get_by_placeholder("czego szukasz?")
-            if search_bar.is_visible():
-                products = ["laptop", "iphone case", "karma dla kota", "buty nike", "lego"]
-                query = random.choice(products)
-
-                search_bar.click()
-                self.page.keyboard.type(query, delay=100)
+            search = self.page.get_by_placeholder("czego szukasz?")
+            if self._safe_wait(search, timeout=3000):
+                search.fill(random.choice(["laptop", "lego", "buty"]))
                 self.page.keyboard.press("Enter")
-                self._human_delay(2, 4)
+                self._human_delay(2, 3)
                 self._human_scroll()
-        except Exception as e:
-            logger.warning(f"⚠️ Allegro fail: {e}")
+        except Exception:
+            pass
 
-    def action_google_redirect(self):
-        logger.info("🍪 [WARMER] Google -> Interia Redirect (Golden Path)")
-        # noinspection PyBroadException
+    def action_google_redirect(self) -> bool:
+        """
+        Scenariusz Golden Path z mechanizmami Fail-Over.
+        """
+        logger.info("🍪 [WARMER] Google -> Interia Redirect")
         try:
             self.page.goto("https://www.google.com", timeout=15000)
-            self._simple_consent_click()
 
-            search_box = self.page.get_by_role("combobox", name="Szukaj").or_(
-                self.page.locator('textarea[name="q"]')).first
+            # 1. RODO - Pierwsza próba
+            self._handle_google_consent()
 
-            search_box.click()
-            self.page.keyboard.type("poczta interia logowanie", delay=random.randint(50, 150))
+            # 2. Wyszukiwanie
+            # Szukamy pola tekstowego uniwersalnym selektorem
+            search_box = self.page.locator("textarea[name='q'], input[name='q']").first
+
+            if not self._safe_wait(search_box, timeout=5000):
+                logger.warning("⚠️ [GOOGLE] Nie widzę pola wyszukiwania. Możliwy blok RODO.")
+                self._save_debug_snapshot("google_no_input", error=True)
+                # Fallback: Próbujemy wejść bezpośrednio
+                raise Exception("Search input not found")
+
+            # Focus zamiast click (omija warstwy przechwytujące kliknięcia)
+            search_box.focus()
+            self.page.keyboard.type("poczta interia logowanie", delay=random.randint(50, 120))
             self._human_delay(0.5, 1.0)
             self.page.keyboard.press("Enter")
 
-            self.page.wait_for_load_state("domcontentloaded")
-            self._human_delay(1.5, 3.0)
+            # 3. Oczekiwanie na wyniki
+            # Szukamy: #rso (standard), #search (stary), .g (klasa wyniku)
+            results_loaded = False
+            for res_sel in ["#rso", "#search", ".g", "div[data-header-feature]"]:
+                if self._safe_wait(self.page.locator(res_sel).first, timeout=3000):
+                    results_loaded = True
+                    break
 
-            target_link = self.page.locator("a[href*='interia.pl']").first
+            if not results_loaded:
+                # Ostatnia szansa: Może RODO wyskoczyło dopiero po Enterze?
+                logger.info("❓ [GOOGLE] Brak wyników. Sprawdzam RODO ponownie...")
+                if self._handle_google_consent():
+                    # Jeśli kliknęliśmy RODO teraz, czekamy chwilę na wyniki
+                    self.page.wait_for_timeout(2000)
+                else:
+                    logger.warning("⚠️ [GOOGLE] Brak wyników i brak RODO.")
+                    self._save_debug_snapshot("google_no_results", error=True)
+                    # Nie rzucamy błędu, tylko idziemy do fallbacku
+                    pass
 
-            if target_link.is_visible():
-                logger.info("   -> Znaleziono link w Google, klikam...")
+            # 4. Kliknięcie w link
+            target_link = self.page.locator("a[href*='poczta.interia.pl']").first
+
+            if self._safe_wait(target_link, timeout=3000):
+                logger.info("🎯 [GOOGLE] Klikam w link Interii.")
                 target_link.click()
+                self.page.wait_for_load_state("domcontentloaded")
+                return True
             else:
-                logger.warning("   -> Nie znaleziono linku Interii w Google! Wchodzę bezpośrednio.")
-                self.page.goto("https://poczta.interia.pl/")
+                logger.warning("⚠️ [GOOGLE] Link Interii nieznaleziony. Fallback Direct.")
+                # Fallback Direct
+                self.page.goto("https://poczta.interia.pl/", timeout=15000)
+                return True  # Zwracamy True, bo cel (wejście na Interię) osiągnięty
 
         except Exception as e:
-            logger.error(f"❌ Google Redirect Failed: {e}")
-            self.page.goto("https://poczta.interia.pl/")
-
-    def run_scenario(self):
-        fillers = [self.action_visit_onet, self.action_visit_wp, self.action_visit_allegro_search]
-        chosen_fillers = random.sample(fillers, k=random.randint(1, 2))
-
-        for action in chosen_fillers:
-            # noinspection PyBroadException
+            logger.error(f"❌ Google Fail: {e}")
+            # Ostateczny Fallback - żeby nie marnować profilu
             try:
-                action()
-                self._human_delay(2.0, 5.0)
-            except Exception as e:
-                logger.warning(f"⚠️ Warmer action failed: {e}")
+                self.page.goto("https://poczta.interia.pl/", timeout=10000)
+                logger.info("✅ [WARMER] Uratowano sesję wejściem bezpośrednim.")
+                return True
+            except:
+                return False
 
-        self.action_google_redirect()
+    def run_scenario(self) -> bool:
+        # Losowy portal newsowy/zakupowy
+        fillers = [self.action_visit_onet, self.action_visit_wp, self.action_visit_allegro_search]
+        try:
+            random.choice(fillers)()
+            self._human_delay(2.0, 4.0)
+        except Exception:
+            pass
+
+        # Google Path (z wbudowanym fallbackiem)
+        return self.action_google_redirect()

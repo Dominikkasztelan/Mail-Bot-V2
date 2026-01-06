@@ -14,7 +14,8 @@ from src.profile_manager import ProfileManager
 from src.identity_manager import IdentityManager
 from src.storage_manager import StorageManager
 from src.logger_config import logger
-from src.exceptions import CaptchaSolveError, RegistrationFailedError
+# FIX: Dodano CaptchaBlockadeError do importów
+from src.exceptions import CaptchaSolveError, RegistrationFailedError, CaptchaBlockadeError
 
 
 def run_worker(instance_id: int, file_lock: Any) -> None:
@@ -48,14 +49,12 @@ def run_worker(instance_id: int, file_lock: Any) -> None:
     current_viewport: ViewportSize = {"width": vp_raw["width"], "height": vp_raw["height"]}
     geo_data: Geolocation = {"latitude": 52.2297, "longitude": 21.0122}
 
-    # FIX: Double Cast dla ciasteczek
     raw_cookies = profile_data.get("cookies")
     cookies_data = cast(Dict[str, Any], cast(object, raw_cookies))
 
     is_headless = os.getenv("HEADLESS", "False").lower() == "true"
 
     with sync_playwright() as p:
-        # FIX: Użycie channel="chrome" i BROWSER_ARGS z configa
         browser = p.chromium.launch(
             channel="chrome",
             headless=is_headless,
@@ -93,6 +92,11 @@ def run_worker(instance_id: int, file_lock: Any) -> None:
 
         except CaptchaSolveError:
             logger.critical(f"{prefix} 🤖 Nie udało się rozwiązać Captchy.")
+
+        # FIX: Nowy handler dla twardej blokady
+        except CaptchaBlockadeError:
+            logger.warning(f"{prefix} ⛔ Twarda blokada Captcha (brak ramki/obrazków). Pomijam próbę.")
+
         except RegistrationFailedError as e:
             logger.error(f"{prefix} ⛔ Rejestracja odrzucona: {e}")
         # noinspection PyBroadException

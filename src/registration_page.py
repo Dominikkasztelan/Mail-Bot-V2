@@ -18,14 +18,16 @@ logger = get_logger(__name__)
 class RegistrationPage:
     """
     Page Object Model dla strony rejestracji.
-    Przywrócono wersję ROBUST (z obsługą retry, get_by_role i poprawnym URL).
+    Wersja PRODUCTION:
+    - Robust Captcha Handling (szukanie ramki B-Frame)
+    - Robust Login Handling (sanityzacja inputu, czyszczenie Ctrl+A)
     """
 
     def __init__(self, page: Page) -> None:
         self.page: Page = page
         self.solver: CaptchaSolver = CaptchaSolver(page)
 
-        # --- SELEKTORY (Twoje oryginalne - najlepsze) ---
+        # --- SELEKTORY ---
         self.input_name: Locator = page.get_by_role("textbox", name="Imię")
         self.input_surname: Locator = page.get_by_role("textbox", name="Nazwisko")
         self.input_day: Locator = page.get_by_role("textbox", name="Dzień")
@@ -50,13 +52,13 @@ class RegistrationPage:
         self.rodo_btn_secondary: Locator = page.get_by_role("button", name="Zgoda")
         self.rodo_btn_accept_all: Locator = page.locator(".rodo-popup-agree")
 
-        self.captcha_frame_locator: Locator = page.locator("iframe[src*='captcha'], iframe[src*='recaptcha']")
         self.verify_text: Locator = page.locator("text=Zweryfikuj")
         self.verify_btn: Locator = page.get_by_role("button", name="Zweryfikuj")
 
         self.error_msg: Locator = page.locator(".form-error")
+        # Selektor błędów loginu (łapie też .form-error pod polem)
         self.login_error_locator: Locator = page.locator(".input-error-message, .form-error").filter(
-            has_text=re.compile(r"zajęty|istnieje|niedozwolone", re.IGNORECASE))
+            has_text=re.compile(r"zajęty|istnieje|niedozwolone|znaków", re.IGNORECASE))
 
     def _save_debug_screenshot(self, name: str) -> None:
         try:
@@ -70,7 +72,6 @@ class RegistrationPage:
             logger.error(f"Nie udało się zapisać screena: {e}")
 
     def load(self) -> None:
-        # PRZYWRÓCONO: Poprawny URL do nowej wersji formularza
         logger.info("🔄 Otwieram stronę rejestracji (Nowy Layout)...")
         try:
             self.page.goto("https://konto-pocztowe.interia.pl/#/nowe-konto/darmowe", timeout=60000)
@@ -102,15 +103,25 @@ class RegistrationPage:
             raise
 
     def handle_captcha_if_present(self) -> bool:
-        has_frame = self.captcha_frame_locator.first.is_visible()
+        """
+        Zaktualizowana metoda obsługi Captchy.
+        Iteruje po ramkach (page.frames) aby znaleźć właściwą ramkę z obrazkami (B-Frame),
+        lub klika w Checkbox (Anchor), aby wywołać wyzwanie.
+        """
+        # 1. Sprawdź czy jest checkbox lub przycisk weryfikacji na głównej stronie
         has_verify_text = self.verify_text.is_visible()
         has_verify_btn = self.verify_btn.is_visible()
 
-        if not (has_frame or has_verify_text or has_verify_btn):
+        # Szybki check: czy w ogóle są jakieś ramki captchy?
+        frames = self.page.frames
+        recaptcha_frames = [f for f in frames if "recaptcha" in f.url or "captcha" in f.url]
+
+        if not (recaptcha_frames or has_verify_text or has_verify_btn):
             return False
 
-        logger.info("⚠️ Wykryto blokadę (Captcha/Zweryfikuj).")
+        logger.info("⚠️ Wykryto potencjalną blokadę (Captcha/Zweryfikuj).")
 
+        # 2. Kliknij "Zweryfikuj" jeśli jest (Interia specyficzne)
         if has_verify_btn or has_verify_text:
             logger.info("👉 Klikam 'Zweryfikuj', aby odsłonić formularz...")
             try:
@@ -122,35 +133,70 @@ class RegistrationPage:
             except Exception as e:
                 logger.warning(f"Problem z kliknięciem Zweryfikuj: {e}")
 
-        # Szukanie ramek captchy
-        visible_frames = []
-        count = self.captcha_frame_locator.count()
-        for i in range(count):
-            frame = self.captcha_frame_locator.nth(i)
-            if frame.is_visible():
-                visible_frames.append(frame)
+        # 3. Szukanie ramki z wyzwaniem obrazkowym (B-Frame)
+        target_frame = None
 
-        if not visible_frames:
-            return True
+        # Pętla prób znalezienia właściwej ramki
+        for _ in range(5):
+            all_frames = self.page.frames
+            target_frame = None
 
-        for frame in visible_frames:
-            box = frame.bounding_box()
-            if box and box['width'] > 150 and box['height'] > 150:
-                logger.warning(f"🚨 CAPTCHA AKTYWNA - Uruchamiam solver.")
-                self.section_delay()
-                # UWAGA: Używamy solve_loop (zgodnie z Twoim plikiem captcha_solver.py)
-                if self.solver.solve_loop(frame):
-                    logger.info("✅ Captcha pokonana.")
-                    return True
-                else:
-                    raise CaptchaSolveError("Solver failed.")
+            # KROK A: Szukamy ramki z obrazkami (już otwartej)
+            for frame in all_frames:
+                try:
+                    if frame.is_detached():
+                        continue
 
+                    # Szukamy elementu charakterystycznego dla wyzwania obrazkowego
+                    if frame.locator("#rc-imageselect-target, .rc-imageselect-payload, table").first.is_visible(
+                            timeout=200):
+                        target_frame = frame
+                        break
+                except Exception:
+                    continue
+
+            if target_frame:
+                break  # Znaleziono!
+
+            # KROK B: Jeśli nie ma obrazków, szukamy Checkboxa i klikamy go
+            for frame in all_frames:
+                try:
+                    if frame.is_detached(): continue
+                    # Selektor checkboxa ("Nie jestem robotem")
+                    checkbox = frame.locator("#recaptcha-anchor, .recaptcha-checkbox-border").first
+                    if checkbox.is_visible(timeout=200):
+                        # Sprawdzamy czy już nie jest zaznaczony
+                        is_checked = "checked" in checkbox.get_attribute("class", "") or \
+                                     "recaptcha-checkbox-checked" in checkbox.get_attribute("class", "")
+
+                        if not is_checked:
+                            logger.info("👉 Klikam Checkbox Captchy...")
+                            checkbox.click()
+                            time.sleep(2.5)  # Czekamy na animację / pojawienie się obrazków
+                            # Po kliknięciu wracamy do początku pętli (KROK A), żeby znaleźć nową ramkę
+                        break
+                except Exception:
+                    continue
+
+            time.sleep(1)
+
+        # 4. Jeśli znaleziono ramkę z obrazkami - uruchamiamy Solver
+        if target_frame:
+            logger.warning(f"🚨 ZNALEZIONO RAMKĘ Z OBRAZKAMI - Uruchamiam solver.")
+            self.section_delay()
+            if self.solver.solve_loop(target_frame):
+                logger.info("✅ Captcha pokonana (solve_loop zwrócił True).")
+                return True
+            else:
+                logger.error("❌ Solver nie dał rady.")
+                return False
+
+        logger.info("ℹ️ Nie znaleziono aktywnej ramki z obrazkami (może captcha rozwiązana?).")
         return False
 
     def ensure_path_clear(self) -> bool:
         """
         Zamyka RODO i inne przeszkadzajki.
-        To tutaj jest klucz do sukcesu - Twój stary kod robił to lepiej.
         """
         cleared_something = False
         for btn in [self.rodo_btn_primary, self.rodo_btn_secondary, self.rodo_btn_accept_all]:
@@ -159,7 +205,7 @@ class RegistrationPage:
                     logger.info(f"🍪 Zamykam RODO przyciskiem: {btn}")
                     btn.click()
                     cleared_something = True
-                    time.sleep(1.0)  # Dajmy czas na animację znikania
+                    time.sleep(1.0)
                     break
                 except Exception:
                     pass
@@ -174,7 +220,6 @@ class RegistrationPage:
         Mechanizm ponawiania akcji w razie zasłonięcia elementu (np. przez RODO).
         """
         for i in range(retries):
-            # Przed każdą próbą upewniamy się, że droga jest czysta
             self.ensure_path_clear()
             try:
                 action_callback()
@@ -183,7 +228,6 @@ class RegistrationPage:
                 msg = str(e)
                 logger.warning(f"⚠️ Retry {i + 1}/{retries} '{action_name}': {msg[:80]}...")
 
-                # Jeśli to Playwright intercept, spróbuj uciec (Escape)
                 if "intercepts" in msg:
                     self.page.keyboard.press("Escape")
 
@@ -192,8 +236,28 @@ class RegistrationPage:
                     raise ElementNotFoundError(f"Failed to perform action: {action_name}") from e
                 time.sleep(1.0)
 
+    def _sanitize_and_truncate_login(self, login_base: str, suffix: str) -> str:
+        """
+        Czyści login z niedozwolonych znaków i przycina go tak,
+        aby razem z sufiksem nie przekroczył 32 znaków.
+        """
+        # 1. Dozwolone tylko: a-z, 0-9, kropka, podkreślnik
+        clean_base = re.sub(r"[^a-z0-9._]", "", login_base.lower())
+
+        # 2. Oblicz ile miejsca zostaje na bazę (32 - długość sufiksu)
+        max_base_len = 32 - len(str(suffix))
+
+        if len(clean_base) > max_base_len:
+            clean_base = clean_base[:max_base_len]
+
+        # 3. Złóż finalny login
+        final_login = f"{clean_base}{suffix}"
+
+        # 4. Finalne upewnienie się
+        return final_login[:32]
+
     def _ensure_unique_login(self, identity: Dict[str, Any]) -> None:
-        max_attempts = 5
+        max_attempts = 10
 
         # Upewnij się, że input jest dostępny
         if not self.input_login.is_visible():
@@ -204,52 +268,66 @@ class RegistrationPage:
 
         self.input_login.wait_for(state="visible", timeout=10000)
 
-        for attempt in range(max_attempts):
-            current_login = identity['login']
-            logger.info(f"📧 Próba loginu ({attempt + 1}/{max_attempts}): {current_login}")
+        # Pobieramy bazę z obecnego loginu
+        base_parts = identity['login'].split('.')
+        if len(base_parts) >= 2:
+            base_core = f"{base_parts[0]}.{base_parts[1]}"
+        else:
+            base_core = identity['login'][:15]
 
-            self.input_login.clear()
-            self.human_type(self.input_login, current_login, use_click=True)
+        for attempt in range(max_attempts):
+            suffix = str(random.randint(100, 9999))
+
+            # STWORZENIE POPRAWNEGO TECHNICZNIE LOGINU
+            current_login = self._sanitize_and_truncate_login(base_core, suffix)
+
+            logger.info(f"📧 Próba loginu ({attempt + 1}/{max_attempts}): {current_login} (len: {len(current_login)})")
+
+            # --- FIX: AGRESYWNE CZYSZCZENIE POLA ---
+            # Klik -> Ctrl+A -> Backspace
+            self.input_login.click()
+            self.page.keyboard.press("Control+A")
+            self.page.keyboard.press("Backspace")
+            time.sleep(0.1)
+
+            self.human_type(self.input_login, current_login, use_click=False)
 
             self.page.keyboard.press("Tab")
-            time.sleep(1.5)
+            time.sleep(1.5)  # Czekamy na walidację asynchroniczną JS
 
             actual_value = self.input_login.input_value()
 
+            # Walidacja: Czy pole nie jest puste?
             if not actual_value.strip():
-                logger.warning("❌ Pole loginu jest PUSTE po walidacji! Generuję nowy...")
-                is_error = True
-            else:
-                identity['login'] = actual_value
-                is_error = False
-
-            if self.login_error_locator.first.is_visible():
-                logger.warning(f"❌ Login '{actual_value}' jest ZAJĘTY.")
-                is_error = True
-
-            if is_error:
-                suffix = random.randint(10, 999)
-                try:
-                    base_parts = current_login.split('.')
-                    base_login = f"{base_parts[0]}.{base_parts[1]}"
-                except IndexError:
-                    base_login = current_login[:10]
-
-                identity['login'] = f"{base_login}.{suffix}"
+                logger.warning("❌ Pole loginu jest PUSTE po wpisaniu! Ponawiam...")
                 continue
-            else:
-                logger.info(f"✅ Login '{identity['login']}' zaakceptowany.")
-                return
 
-        raise RegistrationFailedError("Nie udało się znaleźć wolnego loginu po wielu próbach.")
+            # --- FIX: WYKRYWANIE BŁĘDÓW WALIDACJI ---
+            error_element = self.page.locator(".input-error-message, .form-error").first
+
+            if error_element.is_visible():
+                error_text = error_element.inner_text()
+                logger.warning(f"❌ Błąd walidacji dla '{actual_value}': {error_text}")
+
+                # Jeśli błąd dotyczy znaków/formatu, skracamy bazę
+                if "znaków" in error_text or "dozwolone" in error_text:
+                    base_core = base_core[:-1]
+
+                continue
+
+            # Jeśli przeszliśmy tu, login jest OK
+            identity['login'] = actual_value
+            logger.info(f"✅ Login '{identity['login']}' zaakceptowany.")
+            return
+
+        raise RegistrationFailedError("Nie udało się znaleźć wolnego i poprawnego loginu po wielu próbach.")
 
     def fill_form(self, identity: Dict[str, Any]) -> None:
         """
-        Główna metoda wypełniania. Przyjmuje słownik z identity_manager.
+        Główna metoda wypełniania formularza.
         """
         logger.info(f"📝 Wypełnianie: {identity['first_name']} {identity['last_name']}")
 
-        # Używamy retry_action, które samo czyści RODO w razie błędu!
         self.retry_action("Imię", lambda: self.human_type(self.input_name, identity['first_name']))
         self.page.keyboard.press("Tab")
         self.retry_action("Nazwisko",

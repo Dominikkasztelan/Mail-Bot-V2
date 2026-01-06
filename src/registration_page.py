@@ -13,7 +13,7 @@ from src.exceptions import ElementNotFoundError, RegistrationFailedError, Captch
 
 logger = get_logger(__name__)
 
-# Lista dostępnych domen w Interii
+# Lista dostępnych domen w Interii (kolejność ma znaczenie - interia.pl jako domyślna pierwsza)
 AVAILABLE_DOMAINS = ["interia.pl", "interia.eu", "poczta.fm"]
 
 
@@ -23,7 +23,7 @@ class RegistrationPage:
     Wersja PRODUCTION:
     - Obsługa twardej blokady (CaptchaBlockadeError)
     - Rotacja domen w przypadku zajętego loginu (interia.pl / interia.eu / poczta.fm)
-    - Robust detection ramek
+    - Lazy switching: zmiana domeny tylko w przypadku błędu (czerwonego pola)
     """
 
     def __init__(self, page: Page) -> None:
@@ -244,7 +244,7 @@ class RegistrationPage:
     def _select_domain(self, domain: str) -> bool:
         """Wybiera domenę z listy rozwijanej."""
         try:
-            logger.info(f"🌐 Próba ustawienia domeny: {domain}")
+            logger.info(f"🌐 Próba zmiany domeny na: {domain}")
             self.domain_select_trigger.click()
             time.sleep(0.5)
 
@@ -269,20 +269,7 @@ class RegistrationPage:
         if self.page.locator(".input-error-message").is_visible():
             return False
 
-        # 2. Sprawdź klasy CSS na polach (często 'ng-invalid' lub podobne przy czerwonym podkreśleniu)
-        # Pobieramy klasy kontenera input-login
-        login_classes = self.input_login.get_attribute("class") or ""
-        domain_classes = self.domain_select_trigger.get_attribute("class") or ""
-
-        # Jeśli którykolwiek ma klasę wskazującą na błąd (w Interii często jest to specyficzne sterowanie stylem,
-        # ale zazwyczaj pojawia się komunikat).
-        # Fallback: Jeśli nie ma komunikatu, zakładamy że jest OK, CHYBA że domena ma czerwony border.
-
-        # Analiza po zrzucie ekranu: Zielona linia = sukces. Czerwona = błąd.
-        # Sprawdzamy kolor (rzadkie w testach, ale skuteczne w canvas/trudnych formach) - tutaj polegajmy na błędach.
-        # W Interii "zajęty login" zawsze rzuca jakiś element DOM z błędem.
-
-        # Dla pewności, zwracamy False jeśli widzimy jakikolwiek error w sekcji tożsamości
+        # 2. Sprawdź klasy CSS na polach (fallbacks)
         if self.page.locator("div.account-identity .input-error-message").count() > 0:
             return False
 
@@ -290,61 +277,57 @@ class RegistrationPage:
 
     def _ensure_unique_identity(self, identity: Dict[str, Any]) -> None:
         """
-        Generuje unikalny login, rotując zarówno sufiks numeryczny jak i domeny.
+        Generuje unikalny login. Zmienia domenę (rozszerzenie) TYLKO wtedy,
+        gdy aktualna zwraca błąd (świeci na czerwono).
         """
         self.input_login.wait_for(state="visible", timeout=10000)
         base_login_part = identity['login'].split('.')[0] + "." + identity['login'].split('.')[1]
 
         # Pętla loginu (zmiana numerków)
         for login_attempt in range(10):
-            # Generujemy nowy login (lub używamy pierwszego)
+            # 1. Generowanie sufiksu
             if login_attempt == 0:
-                current_login_prefix = identity['login']  # To co przyszło z generatora
-                # Usuwamy ewentualne śmieci z generatora jeśli są za długie
+                current_login_prefix = identity['login']
                 if len(current_login_prefix) > 20:
                     current_login_prefix = f"{base_login_part}.{random.randint(100, 999)}"
             else:
                 suffix = str(random.randint(100, 9999))
                 current_login_prefix = f"{base_login_part}.{suffix}"[:30]
 
-            # Wpisujemy login
+            # 2. Wpisanie loginu
             self.input_login.click()
             self.page.keyboard.press("Control+A")
             self.page.keyboard.press("Backspace")
             self.input_login.press_sequentially(current_login_prefix, delay=50)
 
-            # Opuszczamy pole, żeby triggerować walidację
+            # Opuszczamy pole, żeby triggerować walidację JS
             self.page.keyboard.press("Tab")
             time.sleep(1.0)
 
-            # Pętla domen (dla każdego wpisanego loginu sprawdzamy dostępne domeny)
+            # 3. Pętla po domenach (Lazy check)
             for domain in AVAILABLE_DOMAINS:
-                if self._select_domain(domain):
-                    # Sprawdzamy czy jest wolne
-                    if self._check_availability():
-                        # SUKCES!
-                        identity['login'] = current_login_prefix
-                        # Dodajemy informację o domenie do tożsamości (opcjonalnie, do zapisu)
-                        # Uwaga: identity['login'] w bazie jest zapisywane jako login@interia.pl w StorageManager.
-                        # Musisz obsłużyć zmianę domeny w StorageManager, jeśli chcesz zapisywać @poczta.fm.
-                        # Na razie hack: Doklejamy domenę do loginu TYLKO jeśli to nie interia.pl,
-                        # ALE StorageManager dodaje "@interia.pl" na sztywno.
+                # LOGIKA: Jeśli to "interia.pl" (domyślna), nie klikamy w listę,
+                # chyba że chcemy wymusić. Zakładamy, że startujemy z interia.pl.
+                # Zmieniamy domenę TYLKO jeśli poprzednia iteracja wykazała błąd
+                # (bo wtedy wchodzimy do 'next' domain w tej pętli).
 
-                        # FIX: Nadpisujemy login w identity tak, aby StorageManager wiedział co robić?
-                        # StorageManager ma: f"{identity['login']}@interia.pl"
-                        # Musimy to zmienić w StorageManagerze, albo tutaj oszukać system.
-                        # Najbezpieczniej: Zostawiamy login czysty, ale w StorageManager trzeba poprawić zapis.
-                        # Ale ponieważ nie edytujemy StorageManagera w tym kroku, zróbmy tak:
+                if domain != "interia.pl":
+                    # Jeśli tu jesteśmy, to znaczy że pętla przeszła dalej (poprzednia domena była zajęta)
+                    # więc TERAZ zmieniamy rozszerzenie.
+                    if not self._select_domain(domain):
+                        continue
 
-                        logger.info(f"✅ Znaleziono wolne konto: {current_login_prefix} @ {domain}")
+                # 4. Sprawdzenie dostępności (Czy świeci na czerwono?)
+                if self._check_availability():
+                    # ZIELONO / BRAK BŁĘDU -> Sukces
+                    identity['login'] = current_login_prefix
+                    identity['domain'] = domain
+                    logger.info(f"✅ Znaleziono wolne konto: {current_login_prefix} @ {domain}")
+                    return
 
-                        # Hack dla StorageManagera (żeby nie dopisywał @interia.pl drugi raz jeśli zmienimy logikę)
-                        # W tym momencie StorageManager zakłada @interia.pl.
-                        # Jeśli wybierzemy poczta.fm, login w pliku txt będzie błędny (login@interia.pl).
-                        # **CRITICAL FIX**: Musimy przekazać domenę wyżej.
-                        identity['domain'] = domain
-                        return
+                # BŁĄD -> Logujemy i pętla leci do kolejnej domeny
+                logger.warning(f"⚠️ Login {current_login_prefix} zajęty na {domain} (czerwone pole).")
 
-            logger.warning(f"⚠️ Login {current_login_prefix} zajęty we wszystkich domenach. Próbuję inny numer...")
+            logger.warning(f"⚠️ Wszystkie domeny zajęte dla {current_login_prefix}. Próbuję inny numer...")
 
         raise RegistrationFailedError("Nie udało się znaleźć wolnego loginu po wielu próbach.")

@@ -2,7 +2,6 @@ import logging
 import sys
 from pathlib import Path
 from logging.handlers import RotatingFileHandler
-from typing import Optional
 
 # Import konfiguracji zamiast hardcodowania
 from src.config import LOGGING_CONFIG

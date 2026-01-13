@@ -4,7 +4,8 @@ import time
 import os
 from typing import Any, Dict, cast, Optional
 
-from playwright.sync_api import sync_playwright, Page, BrowserContext, ViewportSize, Geolocation
+# FIX: Import 'Error as PlaywrightError' dla zgodności z PEP 8 (unikanie broad exception)
+from playwright.sync_api import sync_playwright, Page, BrowserContext, ViewportSize, Geolocation, Error as PlaywrightError
 from playwright_stealth import Stealth
 
 # Importy lokalne
@@ -14,7 +15,6 @@ from src.profile_manager import ProfileManager
 from src.identity_manager import IdentityManager
 from src.storage_manager import StorageManager
 from src.logger_config import logger
-# FIX: Dodano CaptchaBlockadeError do importów
 from src.exceptions import CaptchaSolveError, RegistrationFailedError, CaptchaBlockadeError
 
 
@@ -80,7 +80,11 @@ def run_worker(instance_id: int, file_lock: Any) -> None:
 
         try:
             bot.load()
-            bot.fill_form(identity)
+
+            # FIX: Double Cast (UserIdentity -> object -> Dict[str, Any])
+            # Eliminuje błąd lintera: "Cast of type UserIdentity may be a mistake"
+            bot.fill_form(cast(Dict[str, Any], cast(object, identity)))
+
             bot.accept_terms()
             bot.submit()
 
@@ -93,28 +97,31 @@ def run_worker(instance_id: int, file_lock: Any) -> None:
         except CaptchaSolveError:
             logger.critical(f"{prefix} 🤖 Nie udało się rozwiązać Captchy.")
 
-        # FIX: Nowy handler dla twardej blokady
         except CaptchaBlockadeError:
             logger.warning(f"{prefix} ⛔ Twarda blokada Captcha (brak ramki/obrazków). Pomijam próbę.")
 
         except RegistrationFailedError as e:
             logger.error(f"{prefix} ⛔ Rejestracja odrzucona: {e}")
-        # noinspection PyBroadException
+
+        # Safety Net dla nieprzewidzianych błędów (zgodne z PEP 8 dla Workerów, o ile logujemy e)
         except Exception as e:
             logger.critical(f"{prefix} 💥 Krytyczny błąd: {e}")
             try:
+                # FIX: Catch specific errors instead of generic Exception
                 page.screenshot(path=f"logs/crash_{instance_id}.png")
-            except Exception:
-                pass
+            except (OSError, PlaywrightError):
+                logger.warning(f"{prefix} ⚠️ Nie udało się zapisać zrzutu ekranu błędu.")
+
         finally:
             try:
+                # FIX: Catch specific errors instead of generic Exception
                 context.close()
                 browser.close()
-            except Exception:
+            except (PlaywrightError, OSError):
                 pass
 
 
 if __name__ == "__main__":
     from multiprocessing import Lock
-
+    # Symulacja locka dla uruchomienia bezpośredniego
     run_worker(1, Lock())

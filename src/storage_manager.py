@@ -1,5 +1,6 @@
 # src/storage_manager.py
 import datetime
+import os
 from typing import Optional, Any
 from src.models import UserIdentity
 from src.logger_config import logger
@@ -12,29 +13,42 @@ class StorageManager:
     def save_account(self, identity: UserIdentity, lock: Optional[Any] = None) -> None:
         """
         Zapisuje utworzone konto do pliku tekstowego (format: email | hasło | dane | data).
-        Obsługuje dynamiczne domeny (interia.pl, interia.eu, poczta.fm).
+        Obsługuje dynamiczne domeny (interia.pl, interia.eu, poczta.fm) przekazane z RegistrationPage.
         """
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        # POBIERANIE DOMENY: Jeśli 'domain' nie istnieje w identity, użyj domyślnej 'interia.pl'
-        # To kluczowa poprawka, aby obsługiwać rotację domen z RegistrationPage.
-        domain = identity.get("domain", "interia.pl")  # type: ignore (Dla TypedDict bez klucza domain)
+        # 1. POBIERANIE DOMENY
+        # Teraz pobieramy domenę jawnie z obiektu identity.
+        # Dzięki poprawce w registration_page.py, pole to powinno być zawsze wypełnione po sukcesie.
+        domain = identity.get("domain")
 
+        # Zabezpieczenie (Fallback) na wypadek niespójności danych
+        if not domain:
+            logger.warning(f"⚠️ [STORAGE] Brak domeny w identity dla loginu '{identity.get('login')}'. Używam domyślnej 'interia.pl'.")
+            domain = "interia.pl"
+
+        # 2. KONSTRUKCJA ADRESU EMAIL
         full_email = f"{identity['login']}@{domain}"
 
-        # Format linii wyjściowej
+        # Format linii wyjściowej: EMAIL | HASŁO | IMIĘ NAZWISKO | DATA
         line = f"{full_email} | {identity['password']} | {identity['first_name']} {identity['last_name']} | {timestamp}\n"
 
         try:
-            # Sekcja krytyczna zapisu do pliku
+            # Sekcja krytyczna zapisu do pliku (obsługa Locka z Multiprocessing)
             if lock:
                 lock.acquire()
             try:
+                # Otwieramy w trybie 'append' (dopisywanie) z kodowaniem UTF-8
                 with open(self.filepath, "a", encoding="utf-8") as f:
                     f.write(line)
+                    # flush() wymusza zapis bufora na dysk (ważne przy crashu)
+                    f.flush()
+                    os.fsync(f.fileno())
+
                 logger.info(f"💾 [STORAGE] Zapisano konto: {full_email}")
             finally:
                 if lock:
                     lock.release()
+
         except OSError as e:
             logger.error(f"❌ [STORAGE ERROR] Nie udało się zapisać konta {full_email}: {e}")

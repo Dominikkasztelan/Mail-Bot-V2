@@ -3,8 +3,8 @@ import re
 import time
 import random
 import os
-from typing import Callable, Any, Dict, List
-from playwright.sync_api import Page, Locator
+from typing import Callable, Any, Dict
+from playwright.sync_api import Page, Locator, TimeoutError as PlaywrightTimeout, Error as PlaywrightError
 
 from src.captcha_solver import CaptchaSolver
 from src.config import DELAYS
@@ -13,17 +13,17 @@ from src.exceptions import ElementNotFoundError, RegistrationFailedError, Captch
 
 logger = get_logger(__name__)
 
-# Lista dostępnych domen w Interii (kolejność ma znaczenie - interia.pl jako domyślna pierwsza)
-AVAILABLE_DOMAINS = ["interia.pl", "interia.eu", "poczta.fm"]
+# Ustawienie tylko jednej, bazowej domeny
+BASE_DOMAIN = "interia.pl"
 
 
 class RegistrationPage:
     """
     Page Object Model dla strony rejestracji.
     Wersja PRODUCTION:
-    - Obsługa twardej blokady (CaptchaBlockadeError)
-    - Rotacja domen w przypadku zajętego loginu (interia.pl / interia.eu / poczta.fm)
-    - Lazy switching: zmiana domeny tylko w przypadku błędu (czerwonego pola)
+    - HARD SKIP DOMAIN: Dla 'interia.pl' bot w ogóle nie dotyka selektora domen (zakłada domyślność).
+    - PEP 8 Compliance.
+    - Robustness.
     """
 
     def __init__(self, page: Page) -> None:
@@ -67,7 +67,7 @@ class RegistrationPage:
             path = f"logs/debug_{timestamp}_{name}.png"
             self.page.screenshot(path=path)
             logger.info(f"📸 Zapisano screenshot: {path}")
-        except Exception:
+        except (OSError, PlaywrightError, PlaywrightTimeout):
             pass
 
     def load(self) -> None:
@@ -79,14 +79,16 @@ class RegistrationPage:
                 self.ensure_path_clear()
             except CaptchaBlockadeError:
                 logger.warning("⚠️ Strona załadowana z aktywną blokadą Captcha!")
-        except Exception as e:
+        except (PlaywrightError, PlaywrightTimeout) as e:
             logger.error(f"Critical: Nie udało się załadować strony. {e}")
             raise ElementNotFoundError(f"Page load failed: {e}")
 
-    def human_delay(self) -> None:
+    @staticmethod
+    def human_delay() -> None:
         time.sleep(random.uniform(DELAYS.get("THINKING_MIN", 0.1), DELAYS.get("THINKING_MAX", 0.5)))
 
-    def section_delay(self) -> None:
+    @staticmethod
+    def section_delay() -> None:
         time.sleep(random.uniform(DELAYS.get("SECTION_PAUSE_MIN", 0.5), DELAYS.get("SECTION_PAUSE_MAX", 1.5)))
 
     def human_type(self, locator: Locator, text: str, use_click: bool = True) -> None:
@@ -117,7 +119,7 @@ class RegistrationPage:
                 else:
                     self.verify_text.click(force=True)
                 time.sleep(2.5)
-            except Exception:
+            except (PlaywrightError, PlaywrightTimeout):
                 pass
 
         target_frame = None
@@ -133,24 +135,22 @@ class RegistrationPage:
                     target_frame = frame
                     break
 
-                # Fallback selector approach
                 try:
-                    if frame.locator("#rc-imageselect-target, table, .rc-imageselect-payload").first.is_visible(
-                            timeout=100):
+                    if frame.locator("#rc-imageselect-target, table, .rc-imageselect-payload").first.is_visible():
                         target_frame = frame
                         break
-                except:
+                except (PlaywrightError, PlaywrightTimeout):
                     pass
 
             if target_frame:
                 break
 
-            # Checkbox click fallback
             for frame in all_frames:
                 if frame.is_detached(): continue
                 cb = frame.locator("#recaptcha-anchor").first
-                if cb.is_visible(timeout=100):
-                    if "checked" not in cb.get_attribute("class", ""):
+                if cb.is_visible():
+                    class_attr = cb.get_attribute("class") or ""
+                    if "checked" not in class_attr:
                         cb.click()
                         time.sleep(2.0)
                     break
@@ -178,7 +178,7 @@ class RegistrationPage:
                     btn.click()
                     time.sleep(0.5)
                     break
-                except:
+                except (PlaywrightError, PlaywrightTimeout):
                     pass
         self.handle_captcha_if_present()
 
@@ -192,7 +192,7 @@ class RegistrationPage:
             except CaptchaBlockadeError:
                 logger.critical(f"⛔ STOP: Blokada Captcha przy akcji '{action_name}'.")
                 raise
-            except Exception as e:
+            except (PlaywrightError, PlaywrightTimeout) as e:
                 logger.warning(f"⚠️ Retry {i + 1}/{retries} '{action_name}': {str(e)[:100]}")
                 if "intercepts" in str(e):
                     self.page.keyboard.press("Escape")
@@ -222,7 +222,7 @@ class RegistrationPage:
         self.retry_action("Płeć", lambda: (self.label_gender.click(), self.gender_male.click()))
         self.section_delay()
 
-        # --- TUTAJ NASTĘPUJE UNIKALNOŚĆ LOGINU I DOMENY ---
+        # --- UNIKALNOŚĆ LOGINU ---
         self._ensure_unique_identity(identity)
 
         self.retry_action("Hasło", lambda: self.human_type(self.input_password, identity['password']))
@@ -238,11 +238,20 @@ class RegistrationPage:
         try:
             self.page.wait_for_url(lambda u: "nowe-konto" not in u, timeout=15000)
             return True
-        except:
+        except (PlaywrightError, PlaywrightTimeout):
             return False
 
     def _select_domain(self, domain: str) -> bool:
-        """Wybiera domenę z listy rozwijanej."""
+        """
+        Wybiera domenę z listy rozwijanej.
+        HARD SKIP: Jeśli domena to 'interia.pl', funkcja kończy działanie natychmiast
+        zwracając True, zakładając że jest to domyślna wartość.
+        """
+        # Jeśli żądamy interia.pl, po prostu nic nie rób.
+        if domain == "interia.pl":
+            logger.debug("🌐 Wybrano interia.pl - zakładam, że jest domyślna. HARD SKIP interakcji.")
+            return True
+
         try:
             logger.info(f"🌐 Próba zmiany domeny na: {domain}")
             self.domain_select_trigger.click()
@@ -252,24 +261,21 @@ class RegistrationPage:
             option = self.page.locator(".account-identity__domain-select-item").filter(has_text=domain).first
             if option.is_visible():
                 option.click()
-                time.sleep(1.0)  # Czekamy na walidację asynchroniczną Interii
+                time.sleep(1.0)
                 return True
             else:
                 logger.warning(f"⚠️ Domena {domain} niedostępna na liście.")
-                # Klikamy z boku, żeby zamknąć dropdown
                 self.page.mouse.click(0, 0)
                 return False
-        except Exception as e:
+        except (PlaywrightError, PlaywrightTimeout) as e:
             logger.error(f"❌ Błąd zmiany domeny: {e}")
             return False
 
     def _check_availability(self) -> bool:
         """Sprawdza czy pole loginu LUB domeny jest podkreślone na czerwono."""
-        # 1. Sprawdź komunikat tekstowy (klasyczny)
         if self.page.locator(".input-error-message").is_visible():
             return False
 
-        # 2. Sprawdź klasy CSS na polach (fallbacks)
         if self.page.locator("div.account-identity .input-error-message").count() > 0:
             return False
 
@@ -277,15 +283,12 @@ class RegistrationPage:
 
     def _ensure_unique_identity(self, identity: Dict[str, Any]) -> None:
         """
-        Generuje unikalny login. Zmienia domenę (rozszerzenie) TYLKO wtedy,
-        gdy aktualna zwraca błąd (świeci na czerwono).
+        Generuje unikalny login.
         """
         self.input_login.wait_for(state="visible", timeout=10000)
         base_login_part = identity['login'].split('.')[0] + "." + identity['login'].split('.')[1]
 
-        # Pętla loginu (zmiana numerków)
-        for login_attempt in range(10):
-            # 1. Generowanie sufiksu
+        for login_attempt in range(15):
             if login_attempt == 0:
                 current_login_prefix = identity['login']
                 if len(current_login_prefix) > 20:
@@ -294,40 +297,22 @@ class RegistrationPage:
                 suffix = str(random.randint(100, 9999))
                 current_login_prefix = f"{base_login_part}.{suffix}"[:30]
 
-            # 2. Wpisanie loginu
             self.input_login.click()
             self.page.keyboard.press("Control+A")
             self.page.keyboard.press("Backspace")
             self.input_login.press_sequentially(current_login_prefix, delay=50)
-
-            # Opuszczamy pole, żeby triggerować walidację JS
             self.page.keyboard.press("Tab")
             time.sleep(1.0)
 
-            # 3. Pętla po domenach (Lazy check)
-            for domain in AVAILABLE_DOMAINS:
-                # LOGIKA: Jeśli to "interia.pl" (domyślna), nie klikamy w listę,
-                # chyba że chcemy wymusić. Zakładamy, że startujemy z interia.pl.
-                # Zmieniamy domenę TYLKO jeśli poprzednia iteracja wykazała błąd
-                # (bo wtedy wchodzimy do 'next' domain w tej pętli).
-
-                if domain != "interia.pl":
-                    # Jeśli tu jesteśmy, to znaczy że pętla przeszła dalej (poprzednia domena była zajęta)
-                    # więc TERAZ zmieniamy rozszerzenie.
-                    if not self._select_domain(domain):
-                        continue
-
-                # 4. Sprawdzenie dostępności (Czy świeci na czerwono?)
+            # Funkcja _select_domain teraz wykona HARD SKIP dla "interia.pl"
+            if self._select_domain(BASE_DOMAIN):
                 if self._check_availability():
-                    # ZIELONO / BRAK BŁĘDU -> Sukces
+                    logger.info(f"✅ Znaleziono wolne konto: {current_login_prefix} @ {BASE_DOMAIN}")
+
                     identity['login'] = current_login_prefix
-                    identity['domain'] = domain
-                    logger.info(f"✅ Znaleziono wolne konto: {current_login_prefix} @ {domain}")
+                    identity['domain'] = BASE_DOMAIN
                     return
 
-                # BŁĄD -> Logujemy i pętla leci do kolejnej domeny
-                logger.warning(f"⚠️ Login {current_login_prefix} zajęty na {domain} (czerwone pole).")
+            logger.warning(f"⚠️ Login {current_login_prefix}@{BASE_DOMAIN} zajęty. Próbuję inny numer...")
 
-            logger.warning(f"⚠️ Wszystkie domeny zajęte dla {current_login_prefix}. Próbuję inny numer...")
-
-        raise RegistrationFailedError("Nie udało się znaleźć wolnego loginu po wielu próbach.")
+        raise RegistrationFailedError(f"Nie udało się znaleźć wolnego loginu w domenie {BASE_DOMAIN} po wielu próbach.")

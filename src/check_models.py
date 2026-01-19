@@ -1,63 +1,72 @@
+# src/check_models.py
 import os
 import sys
 from pathlib import Path
 from typing import Optional, Any
+from dotenv import load_dotenv
+from google import genai
 
-# --- HARDENING: Obsługa uruchamiania bezpośredniego ---
-# Pozwala uruchomić plik jako 'python src/check_models.py' bez błędów importu
+# Setup path to allow running as script
+# This allows 'python src/check_models.py' to work by adding project root to path
 BASE_DIR = Path(__file__).resolve().parent.parent
 if str(BASE_DIR) not in sys.path:
     sys.path.append(str(BASE_DIR))
 
-from google import genai
-from dotenv import load_dotenv
-from src.logger_config import get_logger
+try:
+    from src.logger_config import get_logger
+except ImportError:
+    # Fallback if logger config is broken or missing deps
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    def get_logger(name): return logging.getLogger(name)
 
-# Inicjalizacja loggera
 logger = get_logger("CheckModels")
 
-# 1. Ładujemy klucz z pliku .env
-load_dotenv()
-api_key: Optional[str] = os.getenv("GEMINI_API_KEY")
+def list_gemini_models() -> None:
+    """
+    Connects to Google GenAI and lists available models.
+    """
+    load_dotenv()
+    api_key: Optional[str] = os.getenv("GEMINI_API_KEY")
 
-if not api_key:
-    logger.critical("❌ BŁĄD: Nie znaleziono klucza 'GEMINI_API_KEY' w pliku .env!")
-    sys.exit(1)
+    if not api_key:
+        logger.critical("❌ CRITICAL: 'GEMINI_API_KEY' not found in .env!")
+        sys.exit(1)
 
-logger.info(f"🔑 Używam klucza: {api_key[:5]}...*****")
+    # Mask key for logging
+    masked_key = f"{api_key[:5]}...*****"
+    logger.info(f"🔑 Using API Key: {masked_key}")
 
-# Inicjalizacja zmiennej przed blokiem try
-models: Any = None
+    models: Any = None
 
-try:
-    client = genai.Client(api_key=api_key)
-    logger.info("🔍 Łączę się z Google API...")
+    try:
+        client = genai.Client(api_key=api_key)
+        logger.info("🔍 Connecting to Google API...")
 
-    # 2. Pobieramy listę modeli
-    models = client.models.list()
+        models = client.models.list()
+        logger.info("✅ AVAILABLE MODELS:")
 
-    logger.info("✅ POBRANO LISTĘ MODELI:")
+        count = 0
+        for m in models:
+            # Safer attribute access
+            model_name = getattr(m, 'name', 'Unknown Name')
+            logger.info(f"👉 {model_name}")
+            count += 1
 
-    count = 0
-    # Iteracja po modelach
-    for m in models:
-        # Bezpieczne pobieranie nazwy
-        model_name = getattr(m, 'name', 'Nieznana nazwa')
-        logger.info(f"👉 {model_name}")
-        count += 1
+        if count == 0:
+            logger.warning("⚠️ Model list is empty. Check API key permissions.")
 
-    if count == 0:
-        logger.warning("⚠️ Lista modeli jest pusta. Sprawdź czy Twój klucz API ma uprawnienia.")
+    except Exception as e:
+        logger.error(f"❌ API CRITICAL ERROR: {e}")
 
-except Exception as e:
-    logger.error(f"❌ BŁĄD KRYTYCZNY API: {e}")
+        # Debugging info
+        if models:
+            try:
+                logger.info(f"🔍 Models object dir: {dir(models)}")
+            except Exception:
+                pass
+        else:
+            logger.warning("⚠️ 'models' variable is empty (failed before fetching).")
 
-    # 3. Bezpieczna diagnostyka w bloku except
-    if models:
-        try:
-            # Używamy debug/info do zrzutu struktury obiektu
-            logger.info(f"🔍 Szczegóły obiektu 'models' (dir): {dir(models)}")
-        except Exception as debug_err:
-            logger.error(f"⚠️ Nie udało się wylistować szczegółów obiektu: {debug_err}")
-    else:
-        logger.warning("⚠️ Zmienna 'models' jest pusta (błąd wystąpił przed lub w trakcie pobierania listy).")
+if __name__ == "__main__":
+    list_gemini_models()

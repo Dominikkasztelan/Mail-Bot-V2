@@ -1,10 +1,10 @@
 # tests/test_solver.py
 import pytest
-from unittest.mock import MagicMock, patch, mock_open
+from unittest.mock import MagicMock, patch
 from src.captcha_solver import CaptchaSolver
 from playwright.sync_api import TimeoutError as PlaywrightTimeout
 
-# Fikstura: Przygotowuje "fałszywego" klienta Google przed każdym testem
+# Fixture: Prepares a "fake" Client before each test
 @pytest.fixture
 def mock_genai_client():
     with patch("src.captcha_solver.genai.Client") as MockClient:
@@ -12,21 +12,23 @@ def mock_genai_client():
 
 def test_solver_parses_json_correctly(mock_genai_client):
     """
-    Scenariusz: Gemini zwraca poprawny JSON [1, 5].
-    Oczekujemy: Metoda zwraca listę pythonową [1, 5].
+    Scenario: Gemini returns correct JSON [1, 5].
+    Expectation: Method returns python list [1, 5].
     """
     mock_response = MagicMock()
     mock_response.text = "```json\n[1, 5]\n```"
     mock_instance = mock_genai_client.return_value
     mock_instance.models.generate_content.return_value = mock_response
 
-    with patch("builtins.open", mock_open(read_data=b"img")):
-        with patch.object(CaptchaSolver, "__init__", lambda self, page: None):
-            solver = CaptchaSolver(None)
-            solver.api_keys = ["test_key"]
-            solver.model_name = "gemini-1.5-flash"
-            
-            result = solver._solve_grid("dummy.png", "instrukcja")
+    # We patch __init__ to avoid real API key validation during test instantiation
+    with patch.object(CaptchaSolver, "__init__", lambda self, page: None):
+        solver = CaptchaSolver(None)
+        solver.api_keys = ["test_key"]
+        solver.model_name = "gemini-1.5-flash"
+        solver._get_client = MagicMock(return_value=mock_instance)
+        
+        # Pass bytes instead of filename
+        result = solver._solve_grid(b"fake_image_bytes", "instrukcja")
 
     assert result == [1, 5]
 
@@ -43,7 +45,7 @@ def test_find_captcha_target_found(mock_genai_client):
     
     assert result == mock_locator
 
-def test_is_solved_or_detached_true(mock_genai_client):
+def test_is_solved_or_detached_true():
     """Test detection of detached frame."""
     mock_frame = MagicMock()
     mock_frame.is_detached.return_value = True

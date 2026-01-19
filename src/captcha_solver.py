@@ -1,20 +1,15 @@
 # src/captcha_solver.py
-import os
 import time
 import random
 import json
 import re
-from typing import List, Any, Optional
+from typing import List, Optional, Any, Union
 
-from playwright.sync_api import Frame, Locator, TimeoutError as PlaywrightTimeout, Error as PlaywrightError
-
-# --- FIX: JEDNOLITA NOWA BIBLIOTEKA (v1.0+) ---
-# Kompatybilność z src/check_models.py
+from playwright.sync_api import Frame, Locator, Page, TimeoutError as PlaywrightTimeout, Error as PlaywrightError
 from google import genai
 from google.genai import types
 
-
-from src.config import API_KEYS, RETRY_LIMITS
+from src.config import API_KEYS, RETRY_LIMITS, DELAYS
 from src.logger_config import get_logger
 from src.exceptions import CaptchaSolveError
 
@@ -23,80 +18,95 @@ logger = get_logger(__name__)
 
 class CaptchaSolver:
     """
-    Solver wykorzystujący Google Gemini Vision (API v1.0+) do rozwiązywania Captcha.
-    Wersja PRODUCTION-READY:
+    Production-Ready Solver using Google Gemini Vision (API v1.0+) for solving ReCaptchas.
+
+    Features:
     - Unified Imports (google-genai)
     - Robust JSON Parsing (JSON Mode)
     - Safe Clicking (Bounding Box Check)
     - Key Rotation
+    - In-Memory Processing (No disk I/O)
+    - Type Safety
     """
 
-    def __init__(self, page: Optional[Any] = None):
+    def __init__(self, page: Optional[Page] = None):
+        """
+        Initialize the CaptchaSolver.
+
+        Args:
+            page (Optional[Page]): The Playwright Page object.
+        """
         self.page = page
         self.api_keys: List[str] = API_KEYS.get("GEMINI", [])
 
         if not self.api_keys:
-            logger.critical("❌ Brak kluczy API Gemini w pliku .env! Solver nie zadziała.")
-            raise ValueError("CRITICAL: Brak kluczy GEMINI_API_KEY")
+            logger.critical("❌ No Gemini API keys found in .env! Solver will not function.")
+            raise ValueError("CRITICAL: Missing GEMINI_API_KEY")
 
-        logger.info(f"🔧 Załadowano {len(self.api_keys)} kluczy API Gemini.")
+        logger.info(f"🔧 Loaded {len(self.api_keys)} Gemini API keys.")
 
-        # Model zoptymalizowany pod kątem wizji i szybkości
+        # Vision-optimized model
         self.model_name = "gemini-1.5-flash"
 
     def _get_client(self) -> genai.Client:
-        """Tworzy klienta z losowym kluczem (rotacja dla każdego zapytania)."""
+        """Create a client with a random key (rotation per request)."""
         return genai.Client(api_key=random.choice(self.api_keys))
 
     def solve_loop(self, frame: Frame) -> bool:
         """
-        Główna pętla obsługująca proces rozwiązywania Captchy wewnątrz ramki.
-        Zwraca True jeśli sukces, False jeśli porażka po X próbach.
+        Main loop handling the Captcha solving process within a frame.
+
+        Args:
+            frame (Frame): The Playwright Frame containing the captcha.
+
+        Returns:
+            bool: True if solved successfully, False otherwise.
         """
-        logger.info("🤖 Startuję pętlę rozwiązywania Captchy...")
+        logger.info("🤖 Starting Captcha solving loop...")
         max_total_attempts = RETRY_LIMITS["CAPTCHA_ATTEMPTS"]
 
         for i in range(max_total_attempts):
             if self._is_solved_or_detached(frame):
-                 return True
+                return True
 
             target = self._find_captcha_target(frame)
-            
+
             if not target:
                 if self._handle_fallback_actions(frame, i):
                     continue
-                time.sleep(2)
+                # Short wait before retrying logic loop
+                self.page.wait_for_timeout(1000) if self.page else time.sleep(1)
                 continue
 
-            # Próba rozwiązania jednej rundy
+            # Attempt one round of solving
             if self._attempt_solve_round(frame, target, i):
-                # Po udanej rundzie, sprawdzamy czy to koniec w kolejnej iteracji pętli
                 pass
             else:
-                # Błąd w rundzie (np. API failure, brak płytek to click)
                 self._click_reload_or_skip(frame)
-                
+
         return False
 
     def _is_solved_or_detached(self, frame: Frame) -> bool:
+        """Check if the captcha frame is detached or hidden (indicating success)."""
         try:
             if frame.is_detached() or not frame.locator("body").is_visible():
-                logger.info("✅ Ramka Captchy zniknęła/detached - zakładam sukces.")
+                logger.info("✅ Captcha frame detached or hidden - assuming success.")
                 return True
         except (PlaywrightTimeout, PlaywrightError):
             return True
         return False
 
     def _find_captcha_target(self, frame: Frame) -> Optional[Locator]:
+        """Find the main captcha image or target area."""
         target_selectors = ["#rc-imageselect-target", ".rc-imageselect-payload", "table", "body"]
         for selector in target_selectors:
             loc = frame.locator(selector).first
             try:
-                # Krótszy timeout dla body, dłuższy dla konkretnych elementów
+                # Wait for visibility with specific timeouts
                 timeout = 2000 if selector == "body" else 4000
                 loc.wait_for(state="visible", timeout=timeout)
-                
-                # Check dla pustego body (żeby nie robić screena białego tła)
+
+                # Check for empty body to avoid white screenshots
                 if selector == "body":
                     box = loc.bounding_box()
                     if box and box['height'] < 50:
@@ -108,13 +118,17 @@ class CaptchaSolver:
         return None
 
     def _attempt_solve_round(self, frame: Frame, target: Locator, attempt_idx: int) -> bool:
+        """Execute one round of: Screenshot -> Gemini -> Click -> Verify."""
         try:
-            screenshot_path = self._take_screenshot(target, attempt_idx)
+            image_bytes = self._take_screenshot(target)
+            if not image_bytes:
+                 return False
+
             instruction = self._get_instruction(frame)
-            
-            tiles_to_click = self._solve_grid(screenshot_path, instruction)
+
+            tiles_to_click = self._solve_grid(image_bytes, instruction)
             if not tiles_to_click:
-                logger.warning("⚠️ Gemini zwróciło pustą listę.")
+                logger.warning("⚠️ Gemini returned empty list.")
                 return False
 
             self._click_tiles(frame, target, tiles_to_click)
@@ -122,31 +136,35 @@ class CaptchaSolver:
             return True
 
         except PlaywrightError as e:
-            logger.error(f"❌ Błąd w rundzie rozwiązywania: {e}")
+            logger.error(f"❌ Error during solve round: {e}")
             return False
 
-    def _take_screenshot(self, target: Locator, attempt_idx: int) -> str:
-        timestamp = int(time.time())
-        screenshot_path = f"logs/captcha_{timestamp}_{attempt_idx}.png"
-        
-        # Upewniamy się, że katalog istnieje
-        os.makedirs("logs", exist_ok=True)
-        target.screenshot(path=screenshot_path)
-        return screenshot_path
+    def _take_screenshot(self, target: Locator) -> Optional[bytes]:
+        """Take a screenshot of the target element in memory."""
+        try:
+            return target.screenshot(type='png')
+        except Exception as e:
+             logger.error(f"❌ Failed to take screenshot: {e}")
+             return None
 
     def _get_instruction(self, frame: Frame) -> str:
-        instruction_el = frame.locator(
-            "strong, .rc-imageselect-desc-no-canonical, #rc-imageselect-instructions").first
-        if instruction_el.is_visible():
-            instruction = instruction_el.inner_text()
-            logger.info(f"🧩 Wyzwanie: '{instruction}'")
-            return instruction
+        """Extract instructions from the Captcha frame."""
+        try:
+            instruction_el = frame.locator(
+                "strong, .rc-imageselect-desc-no-canonical, #rc-imageselect-instructions"
+            ).first
+            if instruction_el.is_visible():
+                instruction = instruction_el.inner_text()
+                logger.info(f"🧩 Challenge: '{instruction}'")
+                return instruction
+        except PlaywrightError:
+            pass
         return "Select all matching images"
 
     def _click_tiles(self, frame: Frame, target: Locator, tiles_idx: List[int]) -> None:
-        logger.info(f"👉 Klikam kafelki: {tiles_idx}")
+        """Click the specified tiles with human-like delays."""
+        logger.info(f"👉 Clicking tiles: {tiles_idx}")
 
-        # Próba znalezienia kafelków wewnątrz celu lub w całej ramce
         tiles = target.locator("td, .rc-imageselect-tile")
         if tiles.count() == 0:
             tiles = frame.locator("td, .rc-imageselect-tile")
@@ -157,49 +175,51 @@ class CaptchaSolver:
             if idx_zero_based < count:
                 tile = tiles.nth(idx_zero_based)
                 self._safe_click_tile(tile)
-                # Losowe opóźnienie między kliknięciami
-                time.sleep(random.uniform(0.15, 0.4))
+                # Random delay between clicks
+                time.sleep(random.uniform(DELAYS.get("HUMAN_TYPE_MIN", 0.15), DELAYS.get("HUMAN_TYPE_MAX", 0.4)))
 
+        # Wait for potential animation/loading
         time.sleep(1)
 
     def _confirm_solution(self, frame: Frame) -> None:
-        # 8. Zatwierdzenie
+        """Click the Verify button."""
         verify_btn = frame.locator("#recaptcha-verify-button, .rc-button-default").first
         if verify_btn.is_visible():
             verify_btn.click()
-            time.sleep(3)
+            # Wait for response (spinner or result)
+            self.page.wait_for_timeout(2000) if self.page else time.sleep(2)
 
     def _handle_fallback_actions(self, frame: Frame, attempt_idx: int) -> bool:
-        """Obsługa checkboxów, przycisków odświeżania i logowania błędów."""
-        # A) Checkbox "Nie jestem robotem"
+        """Handle initial checkbox or reload button."""
+        # A) Checkbox "I'm not a robot"
         checkbox = frame.locator(".recaptcha-checkbox-border, #recaptcha-anchor")
         if checkbox.is_visible():
-            logger.info("👉 Widzę checkbox, klikam...")
+            logger.info("👉 Checkbox visible, clicking...")
             checkbox.click()
-            time.sleep(2)
+            self.page.wait_for_timeout(2000) if self.page else time.sleep(2)
             return True
 
-        # B) Przycisk Odświeżania (np. błąd sieci)
+        # B) Reload Button (e.g. network error)
         reload_btn = frame.locator("#recaptcha-reload-button, .rc-button-reload").first
         if reload_btn.is_visible():
-            logger.warning("⚠️ Widzę przycisk odświeżania, klikam.")
+            logger.warning("⚠️ Reload button visible, clicking.")
             reload_btn.click()
-            time.sleep(2)
+            self.page.wait_for_timeout(2000) if self.page else time.sleep(2)
             return True
 
-        # C) Tylko logowanie
-        logger.warning(f"⚠️ Nie znaleziono obrazka ani kontrolek (próba {attempt_idx + 1}).")
+        # C) Nothing found
+        logger.warning(f"⚠️ No image or controls found (attempt {attempt_idx + 1}).")
         return False
 
-    def _click_reload_or_skip(self, frame: Frame):
-        """Pomocnicza funkcja do klikania Pomiń lub Odśwież w przypadku braku pewności."""
+    def _click_reload_or_skip(self, frame: Frame) -> None:
+        """Click Skip or Reload if stuck."""
         try:
             reload_btn = frame.locator("#recaptcha-reload-button, .rc-button-reload").first
             if reload_btn.is_visible():
                 reload_btn.click()
                 return
 
-            skip_btn = frame.get_by_role("button", name="Pomiń")
+            skip_btn = frame.get_by_role("button", name="Pomiń") # 'Pomiń' is Polish for Skip
             if skip_btn.is_visible():
                 skip_btn.click()
         except PlaywrightError:
@@ -207,42 +227,32 @@ class CaptchaSolver:
 
     def _safe_click_tile(self, tile_locator: Locator) -> None:
         """
-        Bezpieczne klikanie w kafelek z losowym offsetem wewnątrz bounding boxa.
-        Chroni przed klikaniem w punkty (0,0) lub poza elementem (np. gdy grid jest dynamiczny).
+        Click a tile safely with random offset within the bounding box.
+        Prevents clicking (0,0) or outside elements.
         """
         try:
             box = tile_locator.bounding_box()
             if box:
-                # Margines bezpieczeństwa 5px z każdej strony
                 width = box['width']
                 height = box['height']
 
-                # Upewniamy się, że element nie jest za mały na marginesy
+                # Margin 5px
                 if width > 10 and height > 10:
                     safe_x = random.uniform(5, width - 5)
                     safe_y = random.uniform(5, height - 5)
                     tile_locator.click(position={"x": safe_x, "y": safe_y})
                 else:
-                    # Element bardzo mały, klikamy w środek
                     tile_locator.click(force=True)
             else:
-                # Fallback jeśli nie można pobrać boxa (np. element partially hidden)
                 tile_locator.click(force=True)
         except PlaywrightError as e:
-            logger.warning(f"⚠️ Błąd kliknięcia w kafelek: {e}")
+            logger.warning(f"⚠️ Tile click error: {e}")
 
-    def _solve_grid(self, image_path: str, instruction: str) -> List[int]:
+    def _solve_grid(self, image_bytes: bytes, instruction: str) -> List[int]:
         """
-        Wysyła obrazek do Gemini (Nowe API) i zwraca listę indeksów do kliknięcia.
-        Wymusza format JSON response_mime_type.
+        Send image bytes to Gemini and return list of tile indices.
+        Uses JSON mode validation.
         """
-        try:
-            with open(image_path, "rb") as f:
-                image_bytes = f.read()
-        except OSError as e:
-            logger.error(f"❌ Nie można odczytać pliku screenshotu: {e}")
-            return []
-
         prompt = f"""
         Task: Identify tiles containing: "{instruction}".
         Format: Return ONLY a raw JSON list of integers (1-based index).
@@ -251,11 +261,10 @@ class CaptchaSolver:
         NO MARKDOWN, NO EXPLANATIONS.
         """
 
-        for attempt in range(RETRY_LIMITS["GEMINI_API_RETRIES"]):
+        for attempt in range(RETRY_LIMITS.get("GEMINI_API_RETRIES", 3)):
             try:
                 client = self._get_client()
 
-                # Nowe API call (google-genai)
                 response = client.models.generate_content(
                     model=self.model_name,
                     contents=[
@@ -267,7 +276,7 @@ class CaptchaSolver:
                         )
                     ],
                     config=types.GenerateContentConfig(
-                        response_mime_type="application/json",  # JSON MODE - kluczowe dla stabilności
+                        response_mime_type="application/json",
                         temperature=0.1
                     )
                 )
@@ -276,30 +285,30 @@ class CaptchaSolver:
                 if not text_resp:
                     continue
 
-                # Cleaning na wypadek gdyby model dodał ```json ... ``` mimo JSON mode
+                # Clean potential markdown
                 clean_json = text_resp.strip()
                 if "```" in clean_json:
-                    # Wyciągnij treść między klamrami []
-                    match = re.search(r'\[.*\]', clean_json, re.DOTALL)
-                    if match:
-                        clean_json = match.group(0)
-                    else:
-                        clean_json = clean_json.replace("```json", "").replace("```", "")
+                     # Remove code blocks
+                    clean_json = clean_json.replace("```json", "").replace("```", "")
+                
+                # Additional cleanup for safety
+                clean_json = clean_json.strip()
+                
+                # Check if it starts/ends with boolean-like chars if model hallucinated logic
+                if not clean_json.startswith("["):
+                     # try to find list
+                     match = re.search(r'\[.*\]', clean_json, re.DOTALL)
+                     if match:
+                         clean_json = match.group(0)
 
                 result = json.loads(clean_json)
 
                 if isinstance(result, list):
-                    # Filtrujemy tylko inty, żeby zabezpieczyć bota przed błędami typu
                     return [x for x in result if isinstance(x, int)]
 
-            except (json.JSONDecodeError, KeyError, AttributeError) as e:
-                max_retries = RETRY_LIMITS["GEMINI_API_RETRIES"]
-                logger.warning(f"⚠️ Gemini API Error ({attempt + 1}/{max_retries}): {e}")
+            except (json.JSONDecodeError, KeyError, AttributeError, Exception) as e:
+                logger.warning(f"⚠️ Gemini API Error ({attempt + 1}): {e}")
                 time.sleep(1)
                 continue
 
         return []
-
-    def solve(self, image_path: str) -> str:
-        """Placeholder dla legacy calls lub innych typów captchy."""
-        return "NOT_IMPLEMENTED"

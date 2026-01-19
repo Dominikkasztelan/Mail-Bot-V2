@@ -3,8 +3,8 @@ import re
 import time
 import random
 import os
-from typing import Callable, Any, Dict
-from playwright.sync_api import Page, Locator, TimeoutError as PlaywrightTimeout, Error as PlaywrightError
+from typing import Callable, Any, Dict, List, Optional
+from playwright.sync_api import Page, Locator, Frame, TimeoutError as PlaywrightTimeout, Error as PlaywrightError
 
 from src.captcha_solver import CaptchaSolver
 from src.config import DELAYS, RETRY_LIMITS, REGISTRATION_URL
@@ -13,24 +13,22 @@ from src.exceptions import ElementNotFoundError, RegistrationFailedError, Captch
 
 logger = get_logger(__name__)
 
-# Ustawienie tylko jednej, bazowej domeny
-BASE_DOMAIN = "interia.pl"
-
-
 class RegistrationPage:
     """
-    Page Object Model dla strony rejestracji.
-    Wersja PRODUCTION:
-    - HARD SKIP DOMAIN: Dla 'interia.pl' bot w ogóle nie dotyka selektora domen (zakłada domyślność).
-    - PEP 8 Compliance.
-    - Robustness.
+    Page Object Model for the registration page.
+    Production-Ready:
+    - Non-blocking waits (page.wait_for_timeout)
+    - strict typing
+    - Robust handling of existing account check
     """
+
+    DEFAULT_DOMAIN = "interia.pl"
 
     def __init__(self, page: Page) -> None:
         self.page: Page = page
         self.solver: CaptchaSolver = CaptchaSolver(page)
 
-        # --- SELEKTORY FORMULARZA ---
+        # --- FORM SELECTORS ---
         self.input_name: Locator = page.get_by_role("textbox", name="Imię")
         self.input_surname: Locator = page.get_by_role("textbox", name="Nazwisko")
         self.input_day: Locator = page.get_by_role("textbox", name="Dzień")
@@ -40,10 +38,9 @@ class RegistrationPage:
         self.label_gender: Locator = page.get_by_text("Jak się do Ciebie zwracać?")
         self.gender_male: Locator = page.get_by_role("list").filter(has_text="Pan Pani").locator("span").first
 
-        # Login i Domena
+        # Login and Domain
         self.input_login: Locator = page.get_by_label("Nazwa konta", exact=False)
-        self.domain_select_trigger: Locator = page.locator(
-            ".account-identity__domain-select")  # Selektor rozwijania listy
+        self.domain_select_trigger: Locator = page.locator(".account-identity__domain-select")
 
         self.input_password: Locator = page.get_by_role("textbox", name="Hasło", exact=True)
         self.input_password_repeat: Locator = page.get_by_role("textbox", name="Powtórz hasło")
@@ -52,7 +49,7 @@ class RegistrationPage:
             has_text=re.compile(r"^Akceptuję i zaznaczam wszystkie poniższe zgody$")).first
         self.btn_submit: Locator = page.get_by_role("button", name="Załóż darmowe konto")
 
-        # --- SELEKTORY BLOKAD ---
+        # --- BLOCKADE SELECTORS ---
         self.rodo_btn_primary: Locator = page.get_by_role("button", name="Przejdź do serwisu")
         self.rodo_btn_secondary: Locator = page.get_by_role("button", name="Zgoda")
         self.rodo_btn_accept_all: Locator = page.locator(".rodo-popup-agree")
@@ -61,56 +58,61 @@ class RegistrationPage:
         self.verify_btn: Locator = page.get_by_role("button", name="Zweryfikuj")
 
     def _save_debug_screenshot(self, name: str) -> None:
+        """Safe screenshot capture that ignores errors."""
         try:
-            os.makedirs("logs", exist_ok=True)
+            if not os.path.exists("logs"):
+                os.makedirs("logs", exist_ok=True)
             timestamp = time.strftime("%H%M%S")
             path = f"logs/debug_{timestamp}_{name}.png"
             self.page.screenshot(path=path)
-            logger.info(f"📸 Zapisano screenshot: {path}")
-        except (OSError, PlaywrightError, PlaywrightTimeout):
+            logger.info(f"📸 Saved screenshot: {path}")
+        except Exception:
             pass
 
     def load(self) -> None:
-        logger.info("🔄 Otwieram stronę rejestracji...")
+        logger.info("🔄 Opening registration page...")
         try:
             self.page.goto(REGISTRATION_URL, timeout=60000)
             self.page.wait_for_load_state("domcontentloaded")
             try:
                 self.ensure_path_clear()
             except CaptchaBlockadeError:
-                logger.warning("⚠️ Strona załadowana z aktywną blokadą Captcha!")
+                logger.warning("⚠️ Page loaded with active Captcha blockade!")
         except (PlaywrightError, PlaywrightTimeout) as e:
-            logger.error(f"Critical: Nie udało się załadować strony. {e}")
+            logger.error(f"Critical: Failed to load page. {e}")
             raise ElementNotFoundError(f"Page load failed: {e}")
 
-    @staticmethod
-    def human_delay() -> None:
-        time.sleep(random.uniform(DELAYS.get("THINKING_MIN", 0.1), DELAYS.get("THINKING_MAX", 0.5)))
+    def human_delay(self) -> None:
+        """Simulate human thinking time using browser timeout."""
+        delay = random.uniform(DELAYS.get("THINKING_MIN", 0.1), DELAYS.get("THINKING_MAX", 0.5))
+        self.page.wait_for_timeout(delay * 1000)
 
-    @staticmethod
-    def section_delay() -> None:
-        time.sleep(random.uniform(DELAYS.get("SECTION_PAUSE_MIN", 0.5), DELAYS.get("SECTION_PAUSE_MAX", 1.5)))
+    def section_delay(self) -> None:
+        """Simulate delay between form sections."""
+        delay = random.uniform(DELAYS.get("SECTION_PAUSE_MIN", 0.5), DELAYS.get("SECTION_PAUSE_MAX", 1.5))
+        self.page.wait_for_timeout(delay * 1000)
 
     def human_type(self, locator: Locator, text: str, use_click: bool = True) -> None:
+        """Type text with human-like delays."""
         if use_click:
             locator.scroll_into_view_if_needed()
             locator.click(timeout=5000)
 
-        time.sleep(0.2)
+        self.page.wait_for_timeout(200)
         min_delay_ms = int(DELAYS.get("HUMAN_TYPE_MIN", 0.05) * 1000)
         max_delay_ms = int(DELAYS.get("HUMAN_TYPE_MAX", 0.15) * 1000)
         locator.press_sequentially(text, delay=random.randint(min_delay_ms, max_delay_ms))
         self.human_delay()
 
     def handle_captcha_if_present(self) -> bool:
-        """Sprawdza obecność blokady. Zwraca True, jeśli rozwiązano."""
+        """Checks for blockade and solves if present."""
         has_blockade_ui = self._is_blockade_ui_visible()
         frames = self._get_captcha_frames()
 
         if not (has_blockade_ui or frames):
             return False
 
-        logger.info("⚠️ Wykryto potencjalną blokadę.")
+        logger.info("⚠️ Potential blockade detected.")
 
         if has_blockade_ui:
             self._handle_blockade_ui()
@@ -118,24 +120,25 @@ class RegistrationPage:
         target_frame = self._find_target_frame()
         
         if target_frame:
-            logger.warning(f"🚨 Przekazuję ramkę do Solvera...")
+            logger.warning(f"🚨 Passing frame to Solver...")
             if self.solver.solve_loop(target_frame):
                 return True
             else:
-                raise CaptchaBlockadeError("Solver nie rozwiązał Captchy mimo prób.")
+                self._save_debug_screenshot("captcha_failed")
+                raise CaptchaBlockadeError("Solver failed to solve Captcha.")
 
         if has_blockade_ui:
-            # Sprawdzamy ponownie czy po próbach rozwiązania nadal mamy blokadę UI i brak ramki
+            # Check if still blocked after attempts
             if self.verify_btn.is_visible() or self.verify_text.is_visible():
                 self._save_debug_screenshot("blocked_dead_end")
-                raise CaptchaBlockadeError("Blokada widoczna, ale brak ramki z obrazkami.")
+                raise CaptchaBlockadeError("Blockade visible but no image frame found.")
 
         return False
 
     def _is_blockade_ui_visible(self) -> bool:
         return self.verify_text.is_visible() or self.verify_btn.is_visible()
 
-    def _get_captcha_frames(self) -> list:
+    def _get_captcha_frames(self) -> List[Frame]:
         return [f for f in self.page.frames if "recaptcha" in f.url or "captcha" in f.url]
 
     def _handle_blockade_ui(self) -> None:
@@ -144,12 +147,12 @@ class RegistrationPage:
                 self.verify_btn.click(force=True)
             else:
                 self.verify_text.click(force=True)
-            time.sleep(2.5)
+            self.page.wait_for_timeout(2500)
         except (PlaywrightError, PlaywrightTimeout):
             pass
 
-    def _find_target_frame(self) -> Any:
-        # Najpierw szukamy ramki z payloadem (bframe/imageselect)
+    def _find_target_frame(self) -> Optional[Frame]:
+        # Try to find frame with payload
         for attempt in range(5):
             all_frames = self.page.frames
             target_frame = None
@@ -172,13 +175,12 @@ class RegistrationPage:
             if target_frame:
                 return target_frame
 
-            # Jeśli brak payloadu, spróbujmy kliknąć checkbox
             self._attempt_checkbox_click(all_frames)
-            time.sleep(1.0)
+            self.page.wait_for_timeout(1000)
         
         return None
 
-    def _attempt_checkbox_click(self, frames: list) -> None:
+    def _attempt_checkbox_click(self, frames: List[Frame]) -> None:
         for frame in frames:
             if frame.is_detached(): continue
             cb = frame.locator("#recaptcha-anchor").first
@@ -186,30 +188,30 @@ class RegistrationPage:
                 class_attr = cb.get_attribute("class") or ""
                 if "checked" not in class_attr:
                     cb.click()
-                    time.sleep(2.0)
+                    self.page.wait_for_timeout(2000)
                 break
 
     def ensure_path_clear(self) -> None:
-        """Usuwa przeszkody (RODO, Captcha)."""
+        """Removes obstacles (RODO, Captcha)."""
         for btn in [self.rodo_btn_primary, self.rodo_btn_secondary, self.rodo_btn_accept_all]:
             if btn.is_visible():
                 try:
                     btn.click()
-                    time.sleep(0.5)
+                    self.page.wait_for_timeout(500)
                     break
                 except (PlaywrightError, PlaywrightTimeout):
                     pass
         self.handle_captcha_if_present()
 
     def retry_action(self, action_name: str, action_callback: Callable[[], Any], retries: int = 3) -> None:
-        """Ponawia akcję TYLKO jeśli droga jest czysta."""
+        """Retries an action, ensuring path is clear of captchas."""
         for i in range(retries):
             try:
                 self.ensure_path_clear()
                 action_callback()
                 return
             except CaptchaBlockadeError:
-                logger.critical(f"⛔ STOP: Blokada Captcha przy akcji '{action_name}'.")
+                logger.critical(f"⛔ STOP: Captcha blockade during '{action_name}'.")
                 raise
             except (PlaywrightError, PlaywrightTimeout) as e:
                 logger.warning(f"⚠️ Retry {i + 1}/{retries} '{action_name}': {str(e)[:100]}")
@@ -217,39 +219,38 @@ class RegistrationPage:
                     self.page.keyboard.press("Escape")
                 if i == retries - 1:
                     raise ElementNotFoundError(f"Failed: {action_name}") from e
-                time.sleep(1.0)
+                self.page.wait_for_timeout(1000)
 
     def fill_form(self, identity: Dict[str, Any]) -> None:
-        logger.info(f"📝 Wypełnianie: {identity['first_name']} {identity['last_name']}")
+        logger.info(f"📝 Filling form: {identity['first_name']} {identity['last_name']}")
 
-        self.retry_action("Imię", lambda: self.human_type(self.input_name, identity['first_name']))
+        self.retry_action("FirstName", lambda: self.human_type(self.input_name, identity['first_name']))
         self.page.keyboard.press("Tab")
-        self.retry_action("Nazwisko",
+        self.retry_action("LastName",
                           lambda: self.human_type(self.input_surname, identity['last_name'], use_click=False))
         self.section_delay()
 
-        self.retry_action("Dzień", lambda: self.human_type(self.input_day, identity['birth_day']))
+        self.retry_action("Day", lambda: self.human_type(self.input_day, identity['birth_day']))
 
         def sel_month():
             self.label_month.click()
-            # F-6: Exact match instead of filter(has_text) to avoid partial matches
             self.page.get_by_role("listitem").get_by_text(identity['birth_month_name'], exact=True).click()
 
-        self.retry_action("Miesiąc", sel_month)
-        self.retry_action("Rok", lambda: self.human_type(self.input_year, identity['birth_year']))
+        self.retry_action("Month", sel_month)
+        self.retry_action("Year", lambda: self.human_type(self.input_year, identity['birth_year']))
         self.section_delay()
 
-        self.retry_action("Płeć", lambda: (self.label_gender.click(), self.gender_male.click()))
+        self.retry_action("Gender", lambda: (self.label_gender.click(), self.gender_male.click()))
         self.section_delay()
 
-        # --- UNIKALNOŚĆ LOGINU ---
+        # --- LOGIN UNIQUENESS ---
         self._ensure_unique_identity(identity)
 
-        self.retry_action("Hasło", lambda: self.human_type(self.input_password, identity['password']))
-        self.retry_action("Powtórz", lambda: self.human_type(self.input_password_repeat, identity['password']))
+        self.retry_action("Password", lambda: self.human_type(self.input_password, identity['password']))
+        self.retry_action("RepeatPass", lambda: self.human_type(self.input_password_repeat, identity['password']))
 
     def accept_terms(self) -> None:
-        self.retry_action("Zgody", lambda: self.checkbox_accept_all.click())
+        self.retry_action("Terms", lambda: self.checkbox_accept_all.click())
 
     def submit(self) -> None:
         self.retry_action("Submit", lambda: self.btn_submit.click())
@@ -263,75 +264,72 @@ class RegistrationPage:
 
     def _select_domain(self, domain: str) -> bool:
         """
-        Wybiera domenę z listy rozwijanej.
-        HARD SKIP: Jeśli domena to 'interia.pl', funkcja kończy działanie natychmiast
-        zwracając True, zakładając że jest to domyślna wartość.
+        Selects a domain. If domain is default, return True immediately.
         """
-        # Jeśli żądamy interia.pl, po prostu nic nie rób.
-        if domain == "interia.pl":
-            logger.debug("🌐 Wybrano interia.pl - zakładam, że jest domyślna. HARD SKIP interakcji.")
+        if domain == self.DEFAULT_DOMAIN:
+            # logger.debug(f"🌐 Domain is {self.DEFAULT_DOMAIN} (default). Skipping selection.")
             return True
 
         try:
-            logger.info(f"🌐 Próba zmiany domeny na: {domain}")
+            logger.info(f"🌐 Changing domain to: {domain}")
             self.domain_select_trigger.click()
-            time.sleep(0.5)
+            self.page.wait_for_timeout(500)
 
-            # Wybieramy opcję z listy
             option = self.page.locator(".account-identity__domain-select-item").filter(has_text=domain).first
             if option.is_visible():
                 option.click()
-                time.sleep(1.0)
+                self.page.wait_for_timeout(1000)
                 return True
             else:
-                logger.warning(f"⚠️ Domena {domain} niedostępna na liście.")
+                logger.warning(f"⚠️ Domain {domain} not visible.")
                 self.page.mouse.click(0, 0)
                 return False
         except (PlaywrightError, PlaywrightTimeout) as e:
-            logger.error(f"❌ Błąd zmiany domeny: {e}")
+            logger.error(f"❌ Failed to switch domain: {e}")
             return False
 
     def _check_availability(self) -> bool:
-        """Sprawdza czy pole loginu LUB domeny jest podkreślone na czerwono."""
+        """Checks if login or domain fields show error."""
         if self.page.locator(".input-error-message").is_visible():
             return False
-
+        
+        # Sometimes there are multiple error divs
         if self.page.locator("div.account-identity .input-error-message").count() > 0:
             return False
 
         return True
 
     def _ensure_unique_identity(self, identity: Dict[str, Any]) -> None:
-        """
-        Generuje unikalny login.
-        """
+        """Generates a unique login using retries."""
         self.input_login.wait_for(state="visible", timeout=10000)
         base_login = identity['login']
         
-        # Normalizacja bazy loginu
+        # Normalize base login
         if '.' in base_login and len(base_login) > 5:
-             # Zachowujemy strukturę 'imie.nazwisko'
+             # Assume 'name.surname' structure
              parts = base_login.split('.')
              base_login = f"{parts[0]}.{parts[1]}"
         
-        for attempt in range(RETRY_LIMITS["LOGIN_ATTEMPTS"]):
+        attempts_limit = RETRY_LIMITS.get("LOGIN_ATTEMPTS", 10)
+        for attempt in range(attempts_limit):
             current_login = self._generate_login_variant(base_login, attempt)
             
             self._fill_login_field(current_login)
-            time.sleep(1.0)
+            self.page.wait_for_timeout(1000)
 
-            # Funkcja _select_domain teraz wykona HARD SKIP dla "interia.pl"
-            if self._select_domain(BASE_DOMAIN):
+            # _select_domain handles the hard skip for defaults logic internally
+            if self._select_domain(self.DEFAULT_DOMAIN):
                 if self._check_availability():
-                    logger.info(f"✅ Znaleziono wolne konto: {current_login} @ {BASE_DOMAIN}")
+                    logger.info(f"✅ Available account found: {current_login} @ {self.DEFAULT_DOMAIN}")
 
                     identity['login'] = current_login
-                    identity['domain'] = BASE_DOMAIN
+                    identity['domain'] = self.DEFAULT_DOMAIN
                     return
+            
+            # Simple backoff/retry
+            logger.warning(f"⚠️ Login {current_login}@{self.DEFAULT_DOMAIN} taken. Retrying...")
 
-            logger.warning(f"⚠️ Login {current_login}@{BASE_DOMAIN} zajęty. Próbuję inny numer...")
-
-        raise RegistrationFailedError(f"Nie udało się znaleźć wolnego loginu w domenie {BASE_DOMAIN} po wielu próbach.")
+        raise RegistrationFailedError(f"Could not find free login in {self.DEFAULT_DOMAIN} after {attempts_limit} attempts.")
 
     def _generate_login_variant(self, base_login: str, attempt: int) -> str:
         if attempt == 0:

@@ -107,7 +107,7 @@ class CookieWarmer:
                 try:
                     loc.click(force=True)
                     return
-                except:
+                except (PlaywrightTimeout, Exception):
                     pass
 
     # --- AKCJE PORTALOWE ---

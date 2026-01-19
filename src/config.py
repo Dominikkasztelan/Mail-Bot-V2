@@ -67,11 +67,25 @@ VIEWPORTS = [
 # ==========================================
 # GENERATOR DANYCH
 # ==========================================
+POLISH_MONTHS = [
+    "Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec",
+    "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"
+]
+
 GENERATOR_CONFIG = {
     "LOCALE": "pl_PL",
-    "PASSWORD_DEFAULT": "SilneHaslo123!@#",
+    "PASSWORD_DEFAULT": os.getenv("DEFAULT_PASSWORD", "SilneHaslo123!@#"),
     "YEAR_MIN": 1974,
     "YEAR_MAX": 2005,
+}
+
+# ==========================================
+# LIMITY PONAWIANIA (RETRY LIMITS)
+# ==========================================
+RETRY_LIMITS = {
+    "IDENTITY_GENERATION": 100,
+    "CAPTCHA_ATTEMPTS": 5,
+    "LOGIN_ATTEMPTS": 15,
 }
 
 # ==========================================
@@ -121,6 +135,6 @@ LOGGING_CONFIG = {
 # CONFIG LAUNCHERA
 # ==========================================
 LAUNCHER_CONFIG = {
-    "CONCURRENT_BROWSERS": 3,        # Ilość równoległych Workerów
-    "STARTUP_DELAY_MULTIPLIER": 2.5  # Opóźnienie startu kolejnych okien
+    "CONCURRENT_BROWSERS": 1,        # Ilość równoległych Workerów
+    "STARTUP_DELAY_MULTIPLIER": 20.5  # Opóźnienie startu kolejnych okien
 }

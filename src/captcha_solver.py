@@ -13,7 +13,7 @@ from playwright.sync_api import Frame, Locator, TimeoutError as PlaywrightTimeou
 from google import genai
 from google.genai import types
 
-from src.config import API_KEYS
+from src.config import API_KEYS, RETRY_LIMITS
 from src.logger_config import logger
 from src.exceptions import CaptchaSolveError
 
@@ -52,7 +52,7 @@ class CaptchaSolver:
         """
         logger.info("🤖 Startuję pętlę rozwiązywania Captchy...")
 
-        max_total_attempts = 5
+        max_total_attempts = RETRY_LIMITS["CAPTCHA_ATTEMPTS"]
         # Lista selektorów, gdzie szukamy obrazka (włącznie z fallbackiem do body)
         target_selectors = ["#rc-imageselect-target", ".rc-imageselect-payload", "table", "body"]
 

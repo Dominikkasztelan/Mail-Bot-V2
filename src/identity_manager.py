@@ -3,8 +3,9 @@ import os
 import random
 from typing import Optional, Any
 from faker import Faker
-from src.config import GENERATOR_CONFIG
+from src.config import GENERATOR_CONFIG, POLISH_MONTHS, RETRY_LIMITS
 from src.models import UserIdentity
+from src.utils import clean_polish_chars
 
 
 class IdentityManager:
@@ -42,26 +43,18 @@ class IdentityManager:
         last_name = self.fake.last_name_male()
         year = str(random.randint(GENERATOR_CONFIG["YEAR_MIN"], GENERATOR_CONFIG["YEAR_MAX"]))
         day = str(random.randint(1, 28))
-        months = ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec",
-                  "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"]
 
-        def clean(s: str) -> str:
-            """Usuwa polskie znaki i formatuje pod login."""
-            return s.lower().replace('ł', 'l').replace('ś', 's').replace('ą', 'a').replace('ż', 'z').replace('ź',
-                                                                                                             'z').replace(
-                'ć', 'c').replace('ń', 'n').replace('ó', 'o').replace('ę', 'e')
-
-        # Próba wygenerowania unikalnego loginu (do 100 prób)
-        for _ in range(100):
+        # Próba wygenerowania unikalnego loginu (do limitu z configu)
+        for _ in range(RETRY_LIMITS["IDENTITY_GENERATION"]):
             suffix = random.randint(100, 9999)
-            login = f"{clean(first_name)}.{clean(last_name)}.{suffix}"
+            login = f"{clean_polish_chars(first_name)}.{clean_polish_chars(last_name)}.{suffix}"
 
             if not self.check_duplicates(login, lock):
                 return {
                     "first_name": first_name,
                     "last_name": last_name,
                     "birth_day": day,
-                    "birth_month_name": random.choice(months),
+                    "birth_month_name": random.choice(POLISH_MONTHS),
                     "birth_year": year,
                     "password": str(GENERATOR_CONFIG["PASSWORD_DEFAULT"]),
                     "login": login,
@@ -74,9 +67,9 @@ class IdentityManager:
             "first_name": first_name,
             "last_name": last_name,
             "birth_day": day,
-            "birth_month_name": random.choice(months),
+            "birth_month_name": random.choice(POLISH_MONTHS),
             "birth_year": year,
             "password": str(GENERATOR_CONFIG["PASSWORD_DEFAULT"]),
-            "login": f"{clean(first_name)}.{clean(last_name)}.{fallback_suffix}",
+            "login": f"{clean_polish_chars(first_name)}.{clean_polish_chars(last_name)}.{fallback_suffix}",
             "domain": ""  # <--- FIX
         }

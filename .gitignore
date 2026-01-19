@@ -5,3 +5,8 @@
 logs/
 konta_interia.txt
 .idea/
+data/
+saved_accounts/
+screenshots/
+*.png
+current_captcha.png

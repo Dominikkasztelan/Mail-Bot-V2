@@ -222,7 +222,7 @@ class CookieWarmer:
         try:
             random.choice(fillers)()
             self._human_delay(2.0, 4.0)
-        except Exception:
+        except (PlaywrightTimeout, Exception):
             pass
 
         # Google Path (z wbudowanym fallbackiem)

@@ -62,7 +62,7 @@ class CaptchaSolver:
                 if frame.is_detached() or not frame.is_visible():
                     logger.info("✅ Ramka Captchy zniknęła/detached - zakładam sukces.")
                     return True
-            except Exception:
+            except (PlaywrightTimeout, PlaywrightError, Exception):
                 # Jeśli frame jest martwy, to prawdopodobnie sukces (przeładowanie strony)
                 return True
 

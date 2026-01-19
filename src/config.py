@@ -136,5 +136,11 @@ LOGGING_CONFIG = {
 # ==========================================
 LAUNCHER_CONFIG = {
     "CONCURRENT_BROWSERS": 1,        # Ilość równoległych Workerów
+    "CONCURRENT_BROWSERS": 1,        # Ilość równoległych Workerów
     "STARTUP_DELAY_MULTIPLIER": 20.5  # Opóźnienie startu kolejnych okien
 }
+
+# ==========================================
+# ADRESY URL
+# ==========================================
+REGISTRATION_URL = "https://konto-pocztowe.interia.pl/#/nowe-konto/darmowe"

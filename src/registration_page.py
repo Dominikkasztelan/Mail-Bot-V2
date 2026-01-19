@@ -7,7 +7,7 @@ from typing import Callable, Any, Dict
 from playwright.sync_api import Page, Locator, TimeoutError as PlaywrightTimeout, Error as PlaywrightError
 
 from src.captcha_solver import CaptchaSolver
-from src.config import DELAYS
+from src.config import DELAYS, RETRY_LIMITS, REGISTRATION_URL
 from src.logger_config import get_logger
 from src.exceptions import ElementNotFoundError, RegistrationFailedError, CaptchaBlockadeError
 
@@ -73,7 +73,7 @@ class RegistrationPage:
     def load(self) -> None:
         logger.info("🔄 Otwieram stronę rejestracji...")
         try:
-            self.page.goto("https://konto-pocztowe.interia.pl/#/nowe-konto/darmowe", timeout=60000)
+            self.page.goto(REGISTRATION_URL, timeout=60000)
             self.page.wait_for_load_state("domcontentloaded")
             try:
                 self.ensure_path_clear()
@@ -213,7 +213,8 @@ class RegistrationPage:
 
         def sel_month():
             self.label_month.click()
-            self.page.get_by_role("listitem").filter(has_text=identity['birth_month_name']).first.click()
+            # F-6: Exact match instead of filter(has_text) to avoid partial matches
+            self.page.get_by_role("listitem").get_by_text(identity['birth_month_name'], exact=True).click()
 
         self.retry_action("Miesiąc", sel_month)
         self.retry_action("Rok", lambda: self.human_type(self.input_year, identity['birth_year']))
@@ -286,9 +287,11 @@ class RegistrationPage:
         Generuje unikalny login.
         """
         self.input_login.wait_for(state="visible", timeout=10000)
-        base_login_part = identity['login'].split('.')[0] + "." + identity['login'].split('.')[1]
-
-        for login_attempt in range(15):
+        base_login_part = identity['login']
+        if '.' in identity['login']:
+             base_login_part = identity['login'].split('.')[0] + "." + identity['login'].split('.')[1]
+        
+        for login_attempt in range(RETRY_LIMITS["LOGIN_ATTEMPTS"]):
             if login_attempt == 0:
                 current_login_prefix = identity['login']
                 if len(current_login_prefix) > 20:

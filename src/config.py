@@ -86,6 +86,7 @@ RETRY_LIMITS = {
     "IDENTITY_GENERATION": 100,
     "CAPTCHA_ATTEMPTS": 5,
     "LOGIN_ATTEMPTS": 15,
+    "GEMINI_API_RETRIES": 3,  # Retries for Gemini API calls
 }
 
 # ==========================================
@@ -135,7 +136,6 @@ LOGGING_CONFIG = {
 # CONFIG LAUNCHERA
 # ==========================================
 LAUNCHER_CONFIG = {
-    "CONCURRENT_BROWSERS": 1,        # Ilość równoległych Workerów
     "CONCURRENT_BROWSERS": 1,        # Ilość równoległych Workerów
     "STARTUP_DELAY_MULTIPLIER": 20.5  # Opóźnienie startu kolejnych okien
 }

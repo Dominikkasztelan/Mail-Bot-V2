@@ -1,6 +1,7 @@
 import os
 import sys
 from pathlib import Path
+from typing import Optional, Any
 
 # --- HARDENING: Obsługa uruchamiania bezpośredniego ---
 # Pozwala uruchomić plik jako 'python src/check_models.py' bez błędów importu
@@ -17,7 +18,7 @@ logger = get_logger("CheckModels")
 
 # 1. Ładujemy klucz z pliku .env
 load_dotenv()
-api_key = os.getenv("GEMINI_API_KEY")
+api_key: Optional[str] = os.getenv("GEMINI_API_KEY")
 
 if not api_key:
     logger.critical("❌ BŁĄD: Nie znaleziono klucza 'GEMINI_API_KEY' w pliku .env!")
@@ -26,7 +27,7 @@ if not api_key:
 logger.info(f"🔑 Używam klucza: {api_key[:5]}...*****")
 
 # Inicjalizacja zmiennej przed blokiem try
-models = None
+models: Any = None
 
 try:
     client = genai.Client(api_key=api_key)

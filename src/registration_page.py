@@ -104,8 +104,8 @@ class RegistrationPage:
 
     def handle_captcha_if_present(self) -> bool:
         """Sprawdza obecność blokady. Zwraca True, jeśli rozwiązano."""
-        has_blockade_ui = self.verify_text.is_visible() or self.verify_btn.is_visible()
-        frames = [f for f in self.page.frames if "recaptcha" in f.url or "captcha" in f.url]
+        has_blockade_ui = self._is_blockade_ui_visible()
+        frames = self._get_captcha_frames()
 
         if not (has_blockade_ui or frames):
             return False
@@ -113,16 +113,43 @@ class RegistrationPage:
         logger.info("⚠️ Wykryto potencjalną blokadę.")
 
         if has_blockade_ui:
-            try:
-                if self.verify_btn.is_visible():
-                    self.verify_btn.click(force=True)
-                else:
-                    self.verify_text.click(force=True)
-                time.sleep(2.5)
-            except (PlaywrightError, PlaywrightTimeout):
-                pass
+            self._handle_blockade_ui()
 
-        target_frame = None
+        target_frame = self._find_target_frame()
+        
+        if target_frame:
+            logger.warning(f"🚨 Przekazuję ramkę do Solvera...")
+            if self.solver.solve_loop(target_frame):
+                return True
+            else:
+                raise CaptchaBlockadeError("Solver nie rozwiązał Captchy mimo prób.")
+
+        if has_blockade_ui:
+            # Sprawdzamy ponownie czy po próbach rozwiązania nadal mamy blokadę UI i brak ramki
+            if self.verify_btn.is_visible() or self.verify_text.is_visible():
+                self._save_debug_screenshot("blocked_dead_end")
+                raise CaptchaBlockadeError("Blokada widoczna, ale brak ramki z obrazkami.")
+
+        return False
+
+    def _is_blockade_ui_visible(self) -> bool:
+        return self.verify_text.is_visible() or self.verify_btn.is_visible()
+
+    def _get_captcha_frames(self) -> list:
+        return [f for f in self.page.frames if "recaptcha" in f.url or "captcha" in f.url]
+
+    def _handle_blockade_ui(self) -> None:
+        try:
+            if self.verify_btn.is_visible():
+                self.verify_btn.click(force=True)
+            else:
+                self.verify_text.click(force=True)
+            time.sleep(2.5)
+        except (PlaywrightError, PlaywrightTimeout):
+            pass
+
+    def _find_target_frame(self) -> Any:
+        # Najpierw szukamy ramki z payloadem (bframe/imageselect)
         for attempt in range(5):
             all_frames = self.page.frames
             target_frame = None
@@ -141,34 +168,26 @@ class RegistrationPage:
                         break
                 except (PlaywrightError, PlaywrightTimeout):
                     pass
-
+            
             if target_frame:
-                break
+                return target_frame
 
-            for frame in all_frames:
-                if frame.is_detached(): continue
-                cb = frame.locator("#recaptcha-anchor").first
-                if cb.is_visible():
-                    class_attr = cb.get_attribute("class") or ""
-                    if "checked" not in class_attr:
-                        cb.click()
-                        time.sleep(2.0)
-                    break
+            # Jeśli brak payloadu, spróbujmy kliknąć checkbox
+            self._attempt_checkbox_click(all_frames)
             time.sleep(1.0)
+        
+        return None
 
-        if target_frame:
-            logger.warning(f"🚨 Przekazuję ramkę do Solvera...")
-            if self.solver.solve_loop(target_frame):
-                return True
-            else:
-                raise CaptchaBlockadeError("Solver nie rozwiązał Captchy mimo prób.")
-
-        if has_blockade_ui:
-            if self.verify_btn.is_visible() or self.verify_text.is_visible():
-                self._save_debug_screenshot("blocked_dead_end")
-                raise CaptchaBlockadeError("Blokada widoczna, ale brak ramki z obrazkami.")
-
-        return False
+    def _attempt_checkbox_click(self, frames: list) -> None:
+        for frame in frames:
+            if frame.is_detached(): continue
+            cb = frame.locator("#recaptcha-anchor").first
+            if cb.is_visible():
+                class_attr = cb.get_attribute("class") or ""
+                if "checked" not in class_attr:
+                    cb.click()
+                    time.sleep(2.0)
+                break
 
     def ensure_path_clear(self) -> None:
         """Usuwa przeszkody (RODO, Captcha)."""
@@ -287,35 +306,45 @@ class RegistrationPage:
         Generuje unikalny login.
         """
         self.input_login.wait_for(state="visible", timeout=10000)
-        base_login_part = identity['login']
-        if '.' in identity['login']:
-             base_login_part = identity['login'].split('.')[0] + "." + identity['login'].split('.')[1]
+        base_login = identity['login']
         
-        for login_attempt in range(RETRY_LIMITS["LOGIN_ATTEMPTS"]):
-            if login_attempt == 0:
-                current_login_prefix = identity['login']
-                if len(current_login_prefix) > 20:
-                    current_login_prefix = f"{base_login_part}.{random.randint(100, 999)}"
-            else:
-                suffix = str(random.randint(100, 9999))
-                current_login_prefix = f"{base_login_part}.{suffix}"[:30]
-
-            self.input_login.click()
-            self.page.keyboard.press("Control+A")
-            self.page.keyboard.press("Backspace")
-            self.input_login.press_sequentially(current_login_prefix, delay=50)
-            self.page.keyboard.press("Tab")
+        # Normalizacja bazy loginu
+        if '.' in base_login and len(base_login) > 5:
+             # Zachowujemy strukturę 'imie.nazwisko'
+             parts = base_login.split('.')
+             base_login = f"{parts[0]}.{parts[1]}"
+        
+        for attempt in range(RETRY_LIMITS["LOGIN_ATTEMPTS"]):
+            current_login = self._generate_login_variant(base_login, attempt)
+            
+            self._fill_login_field(current_login)
             time.sleep(1.0)
 
             # Funkcja _select_domain teraz wykona HARD SKIP dla "interia.pl"
             if self._select_domain(BASE_DOMAIN):
                 if self._check_availability():
-                    logger.info(f"✅ Znaleziono wolne konto: {current_login_prefix} @ {BASE_DOMAIN}")
+                    logger.info(f"✅ Znaleziono wolne konto: {current_login} @ {BASE_DOMAIN}")
 
-                    identity['login'] = current_login_prefix
+                    identity['login'] = current_login
                     identity['domain'] = BASE_DOMAIN
                     return
 
-            logger.warning(f"⚠️ Login {current_login_prefix}@{BASE_DOMAIN} zajęty. Próbuję inny numer...")
+            logger.warning(f"⚠️ Login {current_login}@{BASE_DOMAIN} zajęty. Próbuję inny numer...")
 
         raise RegistrationFailedError(f"Nie udało się znaleźć wolnego loginu w domenie {BASE_DOMAIN} po wielu próbach.")
+
+    def _generate_login_variant(self, base_login: str, attempt: int) -> str:
+        if attempt == 0:
+            if len(base_login) > 20: 
+                 return f"{base_login}.{random.randint(100, 999)}"
+            return base_login
+        
+        suffix = str(random.randint(100, 9999))
+        return f"{base_login}.{suffix}"[:30]
+
+    def _fill_login_field(self, login: str) -> None:
+        self.input_login.click()
+        self.page.keyboard.press("Control+A")
+        self.page.keyboard.press("Backspace")
+        self.input_login.press_sequentially(login, delay=50)
+        self.page.keyboard.press("Tab")

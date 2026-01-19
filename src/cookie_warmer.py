@@ -5,7 +5,7 @@ import os
 from datetime import datetime
 from typing import Optional
 
-from playwright.sync_api import Page, Locator, TimeoutError as PlaywrightTimeout
+from playwright.sync_api import Page, Locator, TimeoutError as PlaywrightTimeout, Error as PlaywrightError
 from src.logger_config import get_logger
 
 logger = get_logger("CookieWarmer")
@@ -24,8 +24,13 @@ class CookieWarmer:
         self.debug_dir = "logs/debug_warmer"
         os.makedirs(self.debug_dir, exist_ok=True)
 
-    def _save_debug_snapshot(self, tag: str, error: bool = False):
-        """Zapisuje zrzut ekranu i HTML w momencie krytycznym."""
+    def _save_debug_snapshot(self, tag: str, error: bool = False) -> None:
+        """Zapisuje zrzut ekranu i HTML w momencie krytycznym.
+        
+        Args:
+            tag: Opis kontekstu zrzutu (np. 'google_no_input').
+            error: Jeśli True, prefix 'ERR', inaczej 'INFO'.
+        """
         try:
             timestamp = datetime.now().strftime("%H%M%S")
             status = "ERR" if error else "INFO"
@@ -35,19 +40,26 @@ class CookieWarmer:
             # HTML pomaga zrozumieć co widzi bot (Shadow DOM, iframe itp.)
             with open(f"{filename_base}.html", "w", encoding="utf-8") as f:
                 f.write(self.page.content())
-        except Exception:
+        except (OSError, PlaywrightError):
             pass
 
     @staticmethod
-    def _human_delay(min_s=1.0, max_s=3.0):
+    def _human_delay(min_s: float = 1.0, max_s: float = 3.0) -> None:
+        """Symuluje ludzkie opóźnienie między akcjami.
+        
+        Args:
+            min_s: Minimalny czas oczekiwania w sekundach.
+            max_s: Maksymalny czas oczekiwania w sekundach.
+        """
         time.sleep(random.uniform(min_s, max_s))
 
-    def _human_scroll(self):
+    def _human_scroll(self) -> None:
+        """Symuluje ludzkie przewijanie strony."""
         try:
             for _ in range(random.randint(3, 6)):
                 self.page.mouse.wheel(0, random.randint(300, 700))
                 time.sleep(random.uniform(0.5, 1.5))
-        except Exception:
+        except PlaywrightError:
             pass
 
     def _safe_wait(self, locator: Locator, timeout: int = 2000) -> bool:
@@ -58,9 +70,7 @@ class CookieWarmer:
         try:
             locator.wait_for(state="visible", timeout=timeout)
             return True
-        except PlaywrightTimeout:
-            return False
-        except Exception:
+        except PlaywrightError:
             return False
 
     def _handle_google_consent(self) -> bool:
@@ -87,13 +97,14 @@ class CookieWarmer:
                     # Czekamy na zniknięcie
                     loc.wait_for(state="hidden", timeout=3000)
                     return True
-                except Exception:
+                except PlaywrightError:
                     logger.warning("⚠️ [GOOGLE] Kliknięto RODO, ale błąd przy znikaniu.")
                     return True  # Zakładamy że kliknięcie przeszło
 
         return False
 
-    def _simple_consent_click(self):
+    def _simple_consent_click(self) -> None:
+        """Próbuje kliknąć przycisk akceptacji RODO na różnych portalach."""
         common_selectors = [
             "button:has-text('Akceptuję')",
             "button:has-text('Zgadzam się')",
@@ -107,30 +118,32 @@ class CookieWarmer:
                 try:
                     loc.click(force=True)
                     return
-                except (PlaywrightTimeout, Exception):
+                except PlaywrightError:
                     pass
 
     # --- AKCJE PORTALOWE ---
 
-    def action_visit_onet(self):
+    def action_visit_onet(self) -> None:
+        """Odwiedza stronę główną Onet.pl."""
         logger.info("🍪 [WARMER] -> Onet")
         try:
             self.page.goto("https://www.onet.pl", timeout=20000)
             self._simple_consent_click()
             self._human_scroll()
-        except Exception:
+        except PlaywrightError:
             pass
 
-    def action_visit_wp(self):
+    def action_visit_wp(self) -> None:
+        """Odwiedza stronę główną WP.pl."""
         logger.info("🍪 [WARMER] -> WP")
         try:
             self.page.goto("https://www.wp.pl", timeout=20000)
             self._simple_consent_click()
             self._human_scroll()
-        except Exception:
+        except PlaywrightError:
             pass
 
-    def action_visit_allegro_search(self):
+    def action_visit_allegro_search(self) -> None:
         logger.info("🍪 [WARMER] -> Allegro")
         try:
             self.page.goto("https://allegro.pl", timeout=20000)
@@ -213,7 +226,7 @@ class CookieWarmer:
                 self.page.goto("https://poczta.interia.pl/", timeout=10000)
                 logger.info("✅ [WARMER] Uratowano sesję wejściem bezpośrednim.")
                 return True
-            except:
+            except PlaywrightError:
                 return False
 
     def run_scenario(self) -> bool:

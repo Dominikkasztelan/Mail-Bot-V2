@@ -1,0 +1,325 @@
+﻿python : C:\Users\user\A
+ppData\Roaming\Python\Py
+thon312-32\site-packages
+\pytest_asyncio\plugin.p
+y:247: PytestDeprecation
+Warning: The configurati
+on option "asyncio_defau
+lt_fixture_loop_scope" i
+s unset.
+At line:1 char:1
++ python -m pytest tests
+/test_smoke_e2e.py --tb=
+long 2>&1 | Out-File -F 
+...
++ ~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~
+    + CategoryInfo      
+        : NotSpeci    fi
+ed: (C:\Users\u    ser\A
+...cope" is     unset.:S
+tring) []    , RemoteExc
+eption
+    + FullyQualifiedE   
+ rrorId : NativeCo    mm
+andError
+ 
+The event loop scope for
+ asynchronous fixtures w
+ill default to the fixtu
+re caching scope. Future
+ versions of pytest-asyn
+cio will default the loo
+p scope for asynchronous
+ fixtures to function sc
+ope. Set the default fix
+ture loop scope explicit
+ly in order to avoid une
+xpected behavior in the 
+future. Valid fixture lo
+op scopes are: "function
+", "class", "module", "p
+ackage", "session"
+
+  warnings.warn(PytestDe
+precationWarning(_DEFAUL
+T_FIXTURE_LOOP_SCOPE_UNS
+ET))
+============================= test session starts =============================
+platform win32 -- Python 3.12.0, pytest-8.3.4, pluggy-1.6.0
+rootdir: C:\Users\user\PycharmProjects\Bot_mail_creator
+plugins: anyio-4.12.1, Faker-40.1.2, asyncio-1.3.0, base-url-2.1.0, mock-3.15.1, playwright-0.7.2, xdist-3.8.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 1 item
+
+tests\test_smoke_e2e.py F                                                [100%]
+
+================================== FAILURES ===================================
+_______________ test_interia_form_selectors_are_valid[chromium] _______________
+
+page = <Page url='https://konto-pocztowe.interia.pl/#/nowe-konto/darmowe'>
+
+    @pytest.mark.slow
+    def test_interia_form_selectors_are_valid(page: Page):
+        """
+        SMOKE TEST: Wchodzi na prawdziw╣ stronŕ Interii i sprawdza,
+        czy kluczowe pola formularza nadal istniej╣.
+        Nie zak│ada konta! Tylko sprawdza obecnoťŠ elementˇw.
+        """
+        bot = RegistrationPage(page)
+    
+        # 1. Za│aduj stronŕ
+        try:
+>           bot.load()  # To wywo│a page.goto()
+
+tests\test_smoke_e2e.py:20: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <src.registration_page.RegistrationPage object at 0x070A3960>
+
+    def load(self) -> None:
+        logger.info("\U0001f504 Otwieram stron\u0119 rejestracji...")
+        try:
+            self.page.goto(REGISTRATION_URL, timeout=60000)
+            self.page.wait_for_load_state("domcontentloaded")
+            try:
+>               self.ensure_path_clear()
+
+src\registration_page.py:79: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <src.registration_page.RegistrationPage object at 0x070A3960>
+
+    def ensure_path_clear(self) -> None:
+        """Usuwa przeszkody (RODO, Captcha)."""
+        for btn in [self.rodo_btn_primary, self.rodo_btn_secondary, self.rodo_btn_accept_all]:
+            if btn.is_visible():
+                try:
+                    btn.click()
+                    time.sleep(0.5)
+                    break
+                except (PlaywrightError, PlaywrightTimeout):
+                    pass
+>       self.handle_captcha_if_present()
+
+src\registration_page.py:183: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <src.registration_page.RegistrationPage object at 0x070A3960>
+
+    def handle_captcha_if_present(self) -> bool:
+        """Sprawdza obecnoťŠ blokady. Zwraca True, jeťli rozwi╣zano."""
+        has_blockade_ui = self.verify_text.is_visible() or self.verify_btn.is_visible()
+        frames = [f for f in self.page.frames if "recaptcha" in f.url or "captcha" in f.url]
+    
+        if not (has_blockade_ui or frames):
+            return False
+    
+        logger.info("\u26a0\ufe0f Wykryto potencjaln\u0105 blokad\u0119.")
+    
+        if has_blockade_ui:
+            try:
+                if self.verify_btn.is_visible():
+                    self.verify_btn.click(force=True)
+                else:
+                    self.verify_text.click(force=True)
+                time.sleep(2.5)
+            except (PlaywrightError, PlaywrightTimeout):
+                pass
+    
+        target_frame = None
+        for attempt in range(5):
+            all_frames = self.page.frames
+            target_frame = None
+    
+            for frame in all_frames:
+                if frame.is_detached(): continue
+                url = frame.url.lower()
+    
+                if ("recaptcha" in url) and ("bframe" in url or "payload" in url):
+                    target_frame = frame
+                    break
+    
+                try:
+                    if frame.locator("#rc-imageselect-target, table, .rc-imageselect-payload").first.is_visible():
+                        target_frame = frame
+                        break
+                except (PlaywrightError, PlaywrightTimeout):
+                    pass
+    
+            if target_frame:
+                break
+    
+            for frame in all_frames:
+                if frame.is_detached(): continue
+                cb = frame.locator("#recaptcha-anchor").first
+                if cb.is_visible():
+                    class_attr = cb.get_attribute("class") or ""
+                    if "checked" not in class_attr:
+                        cb.click()
+                        time.sleep(2.0)
+                    break
+            time.sleep(1.0)
+    
+        if target_frame:
+            logger.warning(f"\U0001f6a8 Przekazuj\u0119 ramk\u0119 do Solvera...")
+>           if self.solver.solve_loop(target_frame):
+
+src\registration_page.py:161: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <src.captcha_solver.CaptchaSolver object at 0x070A33A8>
+frame = <Frame name=c-n3nrdyc0zz7c url='https://www.google.com/recaptcha/enterprise/bframe?hl=pl&v=PoyoqOPhxBO7pBk68S4YbpHZ&k=...elE8ExTfEPHW&bft=0dAFcWeA4hzdxNN2U8G9hZZBrb98NXUE95umS5WGJ_WVvj7OQ76AQERb_u4Gkd7eItsjNvSlef4TEVVjQ_i78ZvvrgZJuandJ4oA'>
+
+    def solve_loop(self, frame: Frame) -> bool:
+        """
+        G│ˇwna pŕtla obs│uguj╣ca proces rozwi╣zywania Captchy wewn╣trz ramki.
+        Zwraca True jeťli sukces, False jeťli pora┐ka po X prˇbach.
+        """
+        logger.info("\U0001f916 Startuj\u0119 p\u0119tl\u0119 rozwi\u0105zywania Captchy...")
+    
+        max_total_attempts = RETRY_LIMITS["CAPTCHA_ATTEMPTS"]
+        # Lista selektorˇw, gdzie szukamy obrazka (w│╣cznie z fallbackiem do body)
+        target_selectors = ["#rc-imageselect-target", ".rc-imageselect-payload", "table", "body"]
+    
+        for i in range(max_total_attempts):
+            # 1. Sprawdč czy captcha zniknŕ│a (oznacza sukces weryfikacji)
+            try:
+>               if frame.is_detached() or not frame.is_visible():
+E               TypeError: Frame.is_visible() missing 1 required positional argument: 'selector'
+
+src\captcha_solver.py:64: TypeError
+
+During handling of the above exception, another exception occurred:
+
+page = <Page url='https://konto-pocztowe.interia.pl/#/nowe-konto/darmowe'>
+
+    @pytest.mark.slow
+    def test_interia_form_selectors_are_valid(page: Page):
+        """
+        SMOKE TEST: Wchodzi na prawdziw╣ stronŕ Interii i sprawdza,
+        czy kluczowe pola formularza nadal istniej╣.
+        Nie zak│ada konta! Tylko sprawdza obecnoťŠ elementˇw.
+        """
+        bot = RegistrationPage(page)
+    
+        # 1. Za│aduj stronŕ
+        try:
+            bot.load()  # To wywo│a page.goto()
+        except Exception:
+>           pytest.fail("Nie uda│o siŕ wejťŠ na stronŕ Interii (Timeout/B│╣d sieci)")
+E           Failed: Nie uda│o siŕ wejťŠ na stronŕ Interii (Timeout/B│╣d sieci)
+
+tests\test_smoke_e2e.py:22: Failed
+---------------------------- Captured stdout setup ----------------------------
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Looking for locale `en_US` in provider `faker.providers.address`.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Provider `faker.providers.address` has been localized to `en_US`.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Looking for locale `en_US` in provider `faker.providers.automotive`.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Provider `faker.providers.automotive` has been localized to `en_US`.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Looking for locale `en_US` in provider `faker.providers.bank`.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Specified locale `en_US` is not available for provider `faker.providers.bank`. Locale reset to `en_GB` for this provider.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Looking for locale `en_US` in provider `faker.providers.barcode`.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Provider `faker.providers.barcode` has been localized to `en_US`.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Looking for locale `en_US` in provider `faker.providers.color`.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Provider `faker.providers.color` has been localized to `en_US`.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Looking for locale `en_US` in provider `faker.providers.company`.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Provider `faker.providers.company` has been localized to `en_US`.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Looking for locale `en_US` in provider `faker.providers.credit_card`.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Provider `faker.providers.credit_card` has been localized to `en_US`.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Looking for locale `en_US` in provider `faker.providers.currency`.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Provider `faker.providers.currency` has been localized to `en_US`.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Looking for locale `en_US` in provider `faker.providers.date_time`.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Provider `faker.providers.date_time` has been localized to `en_US`.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Provider `faker.providers.doi` does not feature localization. Specified locale `en_US` is not used for this provider.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Provider `faker.providers.emoji` does not feature localization. Specified locale `en_US` is not used for this provider.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Provider `faker.providers.file` does not feature localization. Specified locale `en_US` is not used for this provider.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Looking for locale `en_US` in provider `faker.providers.geo`.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Provider `faker.providers.geo` has been localized to `en_US`.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Looking for locale `en_US` in provider `faker.providers.internet`.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Provider `faker.providers.internet` has been localized to `en_US`.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Looking for locale `en_US` in provider `faker.providers.isbn`.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Provider `faker.providers.isbn` has been localized to `en_US`.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Looking for locale `en_US` in provider `faker.providers.job`.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Provider `faker.providers.job` has been localized to `en_US`.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Looking for locale `en_US` in provider `faker.providers.lorem`.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Provider `faker.providers.lorem` has been localized to `en_US`.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Looking for locale `en_US` in provider `faker.providers.misc`.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Provider `faker.providers.misc` has been localized to `en_US`.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Looking for locale `en_US` in provider `faker.providers.passport`.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Provider `faker.providers.passport` has been localized to `en_US`.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Looking for locale `en_US` in provider `faker.providers.person`.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Provider `faker.providers.person` has been localized to `en_US`.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Looking for locale `en_US` in provider `faker.providers.phone_number`.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Provider `faker.providers.phone_number` has been localized to `en_US`.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Provider `faker.providers.profile` does not feature localization. Specified locale `en_US` is not used for this provider.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Provider `faker.providers.python` does not feature localization. Specified locale `en_US` is not used for this provider.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Provider `faker.providers.sbn` does not feature localization. Specified locale `en_US` is not used for this provider.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Looking for locale `en_US` in provider `faker.providers.ssn`.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Provider `faker.providers.ssn` has been localized to `en_US`.
+2026-01-19 16:09:53 - [DEBUG] - faker.factory - Provider `faker.providers.user_agent` does not feature localization. Specified locale `en_US` is not used for this provider.
+2026-01-19 16:09:53 - [DEBUG] - asyncio - Using proactor: IocpProactor
+----------------------------- Captured log setup ------------------------------
+DEBUG    faker.factory:factory.py:78 Looking for locale `en_US` in provider `faker.providers.address`.
+DEBUG    faker.factory:factory.py:97 Provider `faker.providers.address` has been localized to `en_US`.
+DEBUG    faker.factory:factory.py:78 Looking for locale `en_US` in provider `faker.providers.automotive`.
+DEBUG    faker.factory:factory.py:97 Provider `faker.providers.automotive` has been localized to `en_US`.
+DEBUG    faker.factory:factory.py:78 Looking for locale `en_US` in provider `faker.providers.bank`.
+DEBUG    faker.factory:factory.py:88 Specified locale `en_US` is not available for provider `faker.providers.bank`. Locale reset to `en_GB` for this provider.
+DEBUG    faker.factory:factory.py:78 Looking for locale `en_US` in provider `faker.providers.barcode`.
+DEBUG    faker.factory:factory.py:97 Provider `faker.providers.barcode` has been localized to `en_US`.
+DEBUG    faker.factory:factory.py:78 Looking for locale `en_US` in provider `faker.providers.color`.
+DEBUG    faker.factory:factory.py:97 Provider `faker.providers.color` has been localized to `en_US`.
+DEBUG    faker.factory:factory.py:78 Looking for locale `en_US` in provider `faker.providers.company`.
+DEBUG    faker.factory:factory.py:97 Provider `faker.providers.company` has been localized to `en_US`.
+DEBUG    faker.factory:factory.py:78 Looking for locale `en_US` in provider `faker.providers.credit_card`.
+DEBUG    faker.factory:factory.py:97 Provider `faker.providers.credit_card` has been localized to `en_US`.
+DEBUG    faker.factory:factory.py:78 Looking for locale `en_US` in provider `faker.providers.currency`.
+DEBUG    faker.factory:factory.py:97 Provider `faker.providers.currency` has been localized to `en_US`.
+DEBUG    faker.factory:factory.py:78 Looking for locale `en_US` in provider `faker.providers.date_time`.
+DEBUG    faker.factory:factory.py:97 Provider `faker.providers.date_time` has been localized to `en_US`.
+DEBUG    faker.factory:factory.py:108 Provider `faker.providers.doi` does not feature localization. Specified locale `en_US` is not used for this provider.
+DEBUG    faker.factory:factory.py:108 Provider `faker.providers.emoji` does not feature localization. Specified locale `en_US` is not used for this provider.
+DEBUG    faker.factory:factory.py:108 Provider `faker.providers.file` does not feature localization. Specified locale `en_US` is not used for this provider.
+DEBUG    faker.factory:factory.py:78 Looking for locale `en_US` in provider `faker.providers.geo`.
+DEBUG    faker.factory:factory.py:97 Provider `faker.providers.geo` has been localized to `en_US`.
+DEBUG    faker.factory:factory.py:78 Looking for locale `en_US` in provider `faker.providers.internet`.
+DEBUG    faker.factory:factory.py:97 Provider `faker.providers.internet` has been localized to `en_US`.
+DEBUG    faker.factory:factory.py:78 Looking for locale `en_US` in provider `faker.providers.isbn`.
+DEBUG    faker.factory:factory.py:97 Provider `faker.providers.isbn` has been localized to `en_US`.
+DEBUG    faker.factory:factory.py:78 Looking for locale `en_US` in provider `faker.providers.job`.
+DEBUG    faker.factory:factory.py:97 Provider `faker.providers.job` has been localized to `en_US`.
+DEBUG    faker.factory:factory.py:78 Looking for locale `en_US` in provider `faker.providers.lorem`.
+DEBUG    faker.factory:factory.py:97 Provider `faker.providers.lorem` has been localized to `en_US`.
+DEBUG    faker.factory:factory.py:78 Looking for locale `en_US` in provider `faker.providers.misc`.
+DEBUG    faker.factory:factory.py:97 Provider `faker.providers.misc` has been localized to `en_US`.
+DEBUG    faker.factory:factory.py:78 Looking for locale `en_US` in provider `faker.providers.passport`.
+DEBUG    faker.factory:factory.py:97 Provider `faker.providers.passport` has been localized to `en_US`.
+DEBUG    faker.factory:factory.py:78 Looking for locale `en_US` in provider `faker.providers.person`.
+DEBUG    faker.factory:factory.py:97 Provider `faker.providers.person` has been localized to `en_US`.
+DEBUG    faker.factory:factory.py:78 Looking for locale `en_US` in provider `faker.providers.phone_number`.
+DEBUG    faker.factory:factory.py:97 Provider `faker.providers.phone_number` has been localized to `en_US`.
+DEBUG    faker.factory:factory.py:108 Provider `faker.providers.profile` does not feature localization. Specified locale `en_US` is not used for this provider.
+DEBUG    faker.factory:factory.py:108 Provider `faker.providers.python` does not feature localization. Specified locale `en_US` is not used for this provider.
+DEBUG    faker.factory:factory.py:108 Provider `faker.providers.sbn` does not feature localization. Specified locale `en_US` is not used for this provider.
+DEBUG    faker.factory:factory.py:78 Looking for locale `en_US` in provider `faker.providers.ssn`.
+DEBUG    faker.factory:factory.py:97 Provider `faker.providers.ssn` has been localized to `en_US`.
+DEBUG    faker.factory:factory.py:108 Provider `faker.providers.user_agent` does not feature localization. Specified locale `en_US` is not used for this provider.
+DEBUG    asyncio:proactor_events.py:634 Using proactor: IocpProactor
+---------------------------- Captured stdout call -----------------------------
+2026-01-19 16:09:54 - [INFO] - GLOBAL - \U0001f527 Za\u0142adowano 2 kluczy API Gemini.\n2026-01-19 16:09:54 - [INFO] - src.registration_page - \U0001f504 Otwieram stron\u0119 rejestracji...\n2026-01-19 16:09:58 - [INFO] - src.registration_page - \u26a0\ufe0f Wykryto potencjaln\u0105 blokad\u0119.\n2026-01-19 16:09:59 - [WARNING] - src.registration_page - \U0001f6a8 Przekazuj\u0119 ramk\u0119 do Solvera...\n2026-01-19 16:09:59 - [INFO] - GLOBAL - \U0001f916 Startuj\u0119 p\u0119tl\u0119 rozwi\u0105zywania Captchy...
+------------------------------ Captured log call ------------------------------
+INFO     GLOBAL:captcha_solver.py:41 \U0001f527 Za\u0142adowano 2 kluczy API Gemini.\nINFO     src.registration_page:registration_page.py:74 \U0001f504 Otwieram stron\u0119 rejestracji...\nINFO     src.registration_page:registration_page.py:113 \u26a0\ufe0f Wykryto potencjaln\u0105 blokad\u0119.\nWARNING  src.registration_page:registration_page.py:160 \U0001f6a8 Przekazuj\u0119 ramk\u0119 do Solvera...\nINFO     GLOBAL:captcha_solver.py:55 \U0001f916 Startuj\u0119 p\u0119tl\u0119 rozwi\u0105zywania Captchy...
+============================== warnings summary ===============================
+..\..\AppData\Roaming\Python\Python312-32\site-packages\cryptography\hazmat\backends\openssl\backend.py:8
+  C:\Users\user\AppData\Roaming\Python\Python312-32\site-packages\cryptography\hazmat\backends\openssl\backend.py:8: UserWarning: You are using cryptography on a 32-bit Python on a 64-bit Windows Operating System. Cryptography will be significantly faster if you switch to using a 64-bit Python.
+    from cryptography.hazmat.bindings.openssl import binding
+
+tests\test_smoke_e2e.py:9
+  C:\Users\user\PycharmProjects\Bot_mail_creator\tests\test_smoke_e2e.py:9: PytestUnknownMarkWarning: Unknown pytest.mark.slow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.slow
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_smoke_e2e.py::test_interia_form_selectors_are_valid[chromium]
+======================== 1 failed, 2 warnings in 6.25s ========================

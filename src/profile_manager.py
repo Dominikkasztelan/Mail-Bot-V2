@@ -21,7 +21,7 @@ class ProfileManager:
         for d in [self.ready_dir, self.used_dir, self.tmp_dir]:
             d.mkdir(parents=True, exist_ok=True)
 
-    def save_profile(self, cookies: Dict, metadata: Dict = None) -> None:
+    def save_profile(self, cookies: Dict, metadata: Optional[Dict] = None) -> None:
         """
         Zapisuje wygrzany profil. Używa katalogu tmp, aby zapis był atomowy.
         """
@@ -44,7 +44,7 @@ class ProfileManager:
             # Atomowe przesunięcie do ready (bezpieczne wątkowo)
             os.rename(tmp_path, final_path)
             logger.info(f"💾 [MANAGER] Dodano nowy profil do puli: {profile_id}")
-        except Exception as e:
+        except OSError as e:
             logger.error(f"❌ Błąd zapisu profilu: {e}")
             if tmp_path.exists():
                 os.remove(tmp_path)
@@ -80,7 +80,8 @@ class ProfileManager:
 
                 logger.info(f"📤 [MANAGER] Pobrano profil: {data['id']}")
                 return data
-            except Exception as e:
+        # W przypadku błędu odczytu/Parsowania JSON
+            except (OSError, json.JSONDecodeError) as e:
                 logger.error(f"❌ Błąd odczytu profilu {file_path}: {e}")
                 # W razie awarii próbujemy przywrócić lub usunąć uszkodzony
                 if locked_path.exists():

@@ -92,7 +92,9 @@ def run_worker(instance_id: int, file_lock: Any) -> None:
                 logger.info(f"{prefix} 🎉 SUKCES!")
                 storage_mgr.save_account(identity, lock=file_lock)
             else:
-                logger.error(f"{prefix} ❌ Błąd weryfikacji.")
+                logger.error(f"{prefix} ❌ Błąd weryfikacji. Sprawdzam dlaczego...")
+                page.screenshot(path=f"logs/debug_final_fail_{instance_id}.png", full_page=True)
+
 
         except CaptchaSolveError:
             logger.critical(f"{prefix} 🤖 Nie udało się rozwiązać Captchy.")

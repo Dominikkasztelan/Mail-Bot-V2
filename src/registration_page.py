@@ -193,6 +193,9 @@ class RegistrationPage:
 
     def ensure_path_clear(self) -> None:
         """Removes obstacles (RODO, Captcha)."""
+        # Small delay to allow RODO banner to fully render/animate
+        self.page.wait_for_timeout(2000)
+        
         for btn in [self.rodo_btn_primary, self.rodo_btn_secondary, self.rodo_btn_accept_all]:
             if btn.is_visible():
                 try:

@@ -308,6 +308,10 @@ class CaptchaSolver:
 
             except (json.JSONDecodeError, KeyError, AttributeError, Exception) as e:
                 logger.warning(f"⚠️ Gemini API Error ({attempt + 1}): {e}")
+                # Critical error check - if 404/Authentication, stop retrying to save quota/time
+                if "404" in str(e) or "NOT_FOUND" in str(e):
+                     logger.error("🛑 Gemini Model not found. Check API Key/Model Name.")
+                     return []
                 time.sleep(1)
                 continue
 

@@ -1,8 +1,10 @@
 # tests/test_registration.py
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import MagicMock, patch, call
+
 from src.registration_page import RegistrationPage
-from src.exceptions import RegistrationFailedError
+
 
 class TestRegistrationPageUnit:
     @pytest.fixture
@@ -21,7 +23,7 @@ class TestRegistrationPageUnit:
     def test_generate_login_variant_logic(self, reg_page):
         """Test the logic for generating login variants without side effects."""
         base = "jan.kowalski"
-        
+
         # Attempt 0 -> base if short enough
         variant_0 = reg_page._generate_login_variant(base, 0)
         assert variant_0 == "jan.kowalski"
@@ -44,11 +46,11 @@ class TestRegistrationPageUnit:
         reg_page.input_login = MagicMock()
         reg_page._check_availability = MagicMock(return_value=True)
         reg_page._select_domain = MagicMock(return_value=True)
-        
+
         identity = {"login": "test.user", "domain": "interia.pl"}
-        
+
         reg_page._ensure_unique_identity(identity)
-        
+
         # Verify
         reg_page._check_availability.assert_called()
         assert identity['login'] == "test.user"
@@ -59,10 +61,10 @@ class TestRegistrationPageUnit:
         # First return False (taken), then True (available)
         reg_page._check_availability = MagicMock(side_effect=[False, True])
         reg_page._select_domain = MagicMock(return_value=True)
-        
+
         identity = {"login": "taken.login", "domain": "interia.pl"}
-        
+
         reg_page._ensure_unique_identity(identity)
-        
+
         assert reg_page._check_availability.call_count == 2
         assert identity['login'] != "taken.login"  # Should have suffix

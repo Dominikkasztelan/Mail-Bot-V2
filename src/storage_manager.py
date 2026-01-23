@@ -7,7 +7,7 @@ from src.logger_config import logger
 
 
 class StorageManager:
-    def __init__(self, filepath: str = "konta_interia.txt"):
+    def __init__(self, filepath: str = "saved_accounts/konta.txt"):
         self.filepath = filepath
 
     def save_account(self, identity: UserIdentity, lock: Optional[Any] = None) -> None:

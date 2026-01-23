@@ -3,8 +3,9 @@
 Unit tests for CookieWarmer module.
 Tests warming scenarios and consent handling without live browser.
 """
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import MagicMock, patch, PropertyMock
 
 
 class TestCookieWarmerUnit:

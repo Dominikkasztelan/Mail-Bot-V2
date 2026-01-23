@@ -1,6 +1,7 @@
 # tests/test_utils.py
 from src.utils import clean_polish_chars
 
+
 def test_clean_polish_chars_basic():
     assert clean_polish_chars("Żółć") == "zolc"
     assert clean_polish_chars("Łukasz") == "lukasz"

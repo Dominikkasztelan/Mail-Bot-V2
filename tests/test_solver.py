@@ -1,8 +1,10 @@
 # tests/test_solver.py
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
+
 from src.captcha_solver import CaptchaSolver
-from playwright.sync_api import TimeoutError as PlaywrightTimeout
+
 
 # Fixture: Prepares a "fake" Client before each test
 @pytest.fixture
@@ -26,7 +28,7 @@ def test_solver_parses_json_correctly(mock_genai_client):
         solver.api_keys = ["test_key"]
         solver.model_name = "gemini-1.5-flash"
         solver._get_client = MagicMock(return_value=mock_instance)
-        
+
         # Pass bytes instead of filename
         result = solver._solve_grid(b"fake_image_bytes", "instrukcja")
 
@@ -38,18 +40,18 @@ def test_find_captcha_target_found(mock_genai_client):
     mock_locator = MagicMock()
     mock_locator.wait_for.return_value = None # success
     mock_frame.locator.return_value.first = mock_locator
-    
+
     with patch("src.captcha_solver.API_KEYS", {"GEMINI": ["key"]}):
         solver = CaptchaSolver(MagicMock())
         result = solver._find_captcha_target(mock_frame)
-    
+
     assert result == mock_locator
 
 def test_is_solved_or_detached_true():
     """Test detection of detached frame."""
     mock_frame = MagicMock()
     mock_frame.is_detached.return_value = True
-    
+
     with patch("src.captcha_solver.API_KEYS", {"GEMINI": ["key"]}):
          solver = CaptchaSolver(MagicMock())
          assert solver._is_solved_or_detached(mock_frame) is True

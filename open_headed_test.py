@@ -35,10 +35,10 @@ async def open_headed_test():
         await page.goto(url)
         
         logger.info("👀 Browser is open. You can now inspect the results.")
-        logger.info("⏳ Script will keep the browser open for 5 minutes (or until you terminate it).")
+        logger.info("⏳ Script will keep the browser open for 1000 seconds (or until you terminate it).")
         
-        # Keep it open for 5 minutes
-        await asyncio.sleep(300)
+        # Keep it open for 1000 seconds (~16.5 minutes)
+        await asyncio.sleep(1000)
         
     except Exception as e:
         logger.error(f"❌ Error: {e}")

@@ -124,42 +124,92 @@ class StealthInjector:
 
             // 3. Realistic PluginArray & MimeTypeArray
             const mockPlugins = () => {
-                const makeFauxData = (data, proto, tag) => {
-                    const faux = Object.create(proto);
-                    data.forEach((item, i) => {
-                        Object.defineProperty(faux, i, { value: item, enumerable: true });
-                        if (item.name) Object.defineProperty(faux, item.name, { value: item, enumerable: false });
-                        if (item.type) Object.defineProperty(faux, item.type, { value: item, enumerable: false });
+                // CRITICAL: Playwright doesn't expose PluginArray, Plugin, MimeType as globals
+                // We must recreate them before attempting to use them
+                
+                // Create Plugin class
+                if (typeof window.Plugin === 'undefined') {
+                    window.Plugin = function Plugin() {
+                        throw new TypeError("Illegal constructor");
+                    };
+                    Object.defineProperty(window.Plugin, 'toString', {
+                        value: () => 'function Plugin() { [native code] }',
+                        configurable: true,
+                        enumerable: false,
+                        writable: true
                     });
-                    Object.defineProperty(faux, 'length', { get: () => data.length });
-                    Object.defineProperty(faux, Symbol.toStringTag, { get: () => tag });
+                    window.Plugin.prototype = Object.create(Object.prototype);
+                    Object.defineProperty(window.Plugin.prototype, 'constructor', {
+                        value: window.Plugin,
+                        writable: true,
+                        enumerable: false,
+                        configurable: true
+                    });
+                }
+                
+                // Create PluginArray class
+                if (typeof window.PluginArray === 'undefined') {
+                    window.PluginArray = function PluginArray() {
+                        throw new TypeError("Illegal constructor");
+                    };
                     
-                    // Add constructor for instanceof checks
-                    if (tag === 'PluginArray') {
-                        Object.defineProperty(faux, 'constructor', {
-                            value: PluginArray,
-                            writable: false,
-                            enumerable: false,
-                            configurable: true
-                        });
-                    }
+                    // Make it look native
+                    Object.defineProperty(window.PluginArray, 'toString', {
+                        value: () => 'function PluginArray() { [native code] }',
+                        configurable: true,
+                        enumerable: false,
+                        writable: true
+                    });
                     
-                    // Use ONLY nativeToStringProxy (no double patching)
-                    faux.item = nativeToStringProxy((i) => faux[i] || null, 'item');
-                    faux.namedItem = nativeToStringProxy((name) => faux[name] || null, 'namedItem');
+                    // Setup prototype chain
+                    window.PluginArray.prototype = Object.create(Object.prototype);
+                    Object.defineProperty(window.PluginArray.prototype, 'constructor', {
+                        value: window.PluginArray,
+                        writable: true,
+                        enumerable: false,
+                        configurable: true
+                    });
                     
-                    return faux;
-                };
-
-                const rawPlugins = [
+                    // Add Symbol.toStringTag to prototype
+                    Object.defineProperty(window.PluginArray.prototype, Symbol.toStringTag, {
+                        value: 'PluginArray',
+                        configurable: true,
+                        enumerable: false,
+                        writable: false
+                    });
+                }
+                
+                // Create plugin objects as Plugin instances
+                const rawPluginsData = [
                     { name: "PDF Viewer", filename: "internal-pdf-viewer", description: "Portable Document Format" },
                     { name: "Chrome PDF Viewer", filename: "internal-pdf-viewer", description: "Portable Document Format" },
                     { name: "Native Client", filename: "internal-nacl-plugin", description: "Native Client Executable" }
                 ];
-
-                const plugins = makeFauxData(rawPlugins, PluginArray.prototype, 'PluginArray');
+                
+                const pluginInstances = rawPluginsData.map(data => {
+                    const plugin = Object.create(window.Plugin.prototype);
+                    Object.defineProperty(plugin, 'name', { value: data.name, enumerable: true });
+                    Object.defineProperty(plugin, 'filename', { value: data.filename, enumerable: true });
+                    Object.defineProperty(plugin, 'description', { value: data.description, enumerable: true });
+                    Object.defineProperty(plugin, 'length', { value: 0, enumerable: true });
+                    return plugin;
+                });
+                
+                // Create PluginArray with Plugin instances
+                const plugins = Object.create(window.PluginArray.prototype);
+                pluginInstances.forEach((plugin, i) => {
+                    Object.defineProperty(plugins, i, { value: plugin, enumerable: true });
+                    Object.defineProperty(plugins, plugin.name, { value: plugin, enumerable: false });
+                });
+                Object.defineProperty(plugins, 'length', { get: () => pluginInstances.length });
+                
+                plugins.item = function item(i) { return plugins[i] || null; };
+                plugins.namedItem = function namedItem(name) { return plugins[name] || null; };
+                
+                // CRITICAL: Use direct value instead of getter with proxy
                 Object.defineProperty(navigator, 'plugins', { 
-                    get: nativeToStringProxy(() => plugins, 'get plugins'),
+                    value: plugins,
+                    writable: false,
                     enumerable: true,
                     configurable: true 
                 });

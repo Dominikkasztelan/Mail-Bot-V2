@@ -1,0 +1,64 @@
+﻿src\shared\browser_core\proxy\manager.py:10: error: Incompatible default for argument "username" (default has type "None", argument has type "str")  [assignment]
+src\shared\browser_core\proxy\manager.py:10: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\shared\browser_core\proxy\manager.py:10: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\shared\browser_core\proxy\manager.py:10: error: Incompatible default for argument "password" (default has type "None", argument has type "str")  [assignment]
+src\shared\browser_core\proxy\manager.py:10: error: Incompatible default for argument "bypass" (default has type "None", argument has type "str")  [assignment]
+src\shared\browser_core\proxy\manager.py:28: error: Incompatible default for argument "password" (default has type "None", argument has type "str")  [assignment]
+src\shared\browser_core\proxy\manager.py:28: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\shared\browser_core\proxy\manager.py:28: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\shared\browser_core\proxy\manager.py:39: error: Argument "username" to "ProxyConfig" has incompatible type "str | None"; expected "str"  [arg-type]
+src\utils\humanizer.py:35: error: Value of type "ViewportSize | None" is not indexable  [index]
+src\utils\humanizer.py:36: error: Value of type "ViewportSize | None" is not indexable  [index]
+src\shared\browser_core\stealth\injector.py:34: error: Function is missing a return type annotation  [no-untyped-def]
+src\shared\browser_core\stealth\injector.py:54: error: Function is missing a return type annotation  [no-untyped-def]
+src\shared\browser_core\stealth\injector.py:77: error: Function is missing a return type annotation  [no-untyped-def]
+src\shared\browser_core\stealth\injector.py:96: error: Function is missing a return type annotation  [no-untyped-def]
+src\shared\browser_core\stealth\injector.py:131: error: Function is missing a return type annotation  [no-untyped-def]
+src\shared\browser_core\network\websocket_monitor.py:14: error: Missing type parameters for generic type "dict"  [type-arg]
+src\shared\browser_core\network\websocket_monitor.py:17: error: Function is missing a return type annotation  [no-untyped-def]
+src\shared\browser_core\network\websocket_monitor.py:17: note: Use "-> None" if function does not return a value
+src\shared\browser_core\network\websocket_monitor.py:24: error: Function is missing a return type annotation  [no-untyped-def]
+src\shared\browser_core\network\websocket_monitor.py:27: error: Function is missing a return type annotation  [no-untyped-def]
+src\shared\browser_core\network\websocket_monitor.py:48: error: Missing type parameters for generic type "dict"  [type-arg]
+quick_test.py:8: error: Function is missing a return type annotation  [no-untyped-def]
+quick_test.py:8: note: Use "-> None" if function does not return a value
+quick_test.py:30: error: Call to untyped function "quick_test" in typed context  [no-untyped-call]
+demo_login.py:11: error: Function is missing a return type annotation  [no-untyped-def]
+demo_login.py:11: note: Use "-> None" if function does not return a value
+demo_login.py:37: error: Call to untyped function "run_demo" in typed context  [no-untyped-call]
+src\shared\browser_core\factory.py:50: error: Incompatible types in assignment (expression has type "str | None", target has type "str")  [assignment]
+src\shared\browser_core\factory.py:58: error: Argument 2 to "launch" of "BrowserType" has incompatible type "**dict[str, object]"; expected "Path | str | None"  [arg-type]
+src\shared\browser_core\factory.py:58: error: Argument 2 to "launch" of "BrowserType" has incompatible type "**dict[str, object]"; expected "Sequence[str] | None"  [arg-type]
+src\shared\browser_core\factory.py:58: error: Argument 2 to "launch" of "BrowserType" has incompatible type "**dict[str, object]"; expected "bool | Sequence[str] | None"  [arg-type]
+src\shared\browser_core\factory.py:58: error: Argument 2 to "launch" of "BrowserType" has incompatible type "**dict[str, object]"; expected "bool | None"  [arg-type]
+src\shared\browser_core\factory.py:58: error: Argument 2 to "launch" of "BrowserType" has incompatible type "**dict[str, object]"; expected "float | None"  [arg-type]
+src\shared\browser_core\factory.py:58: error: Argument 2 to "launch" of "BrowserType" has incompatible type "**dict[str, object]"; expected "dict[str, str | float | bool] | None"  [arg-type]
+src\shared\browser_core\factory.py:58: error: Argument 2 to "launch" of "BrowserType" has incompatible type "**dict[str, object]"; expected "ProxySettings | None"  [arg-type]
+src\shared\browser_core\factory.py:62: error: Argument 1 to "launch" of "BrowserType" has incompatible type "**dict[str, object]"; expected "Path | str | None"  [arg-type]
+src\shared\browser_core\factory.py:62: error: Argument 1 to "launch" of "BrowserType" has incompatible type "**dict[str, object]"; expected "str | None"  [arg-type]
+src\shared\browser_core\factory.py:62: error: Argument 1 to "launch" of "BrowserType" has incompatible type "**dict[str, object]"; expected "Sequence[str] | None"  [arg-type]
+src\shared\browser_core\factory.py:62: error: Argument 1 to "launch" of "BrowserType" has incompatible type "**dict[str, object]"; expected "bool | Sequence[str] | None"  [arg-type]
+src\shared\browser_core\factory.py:62: error: Argument 1 to "launch" of "BrowserType" has incompatible type "**dict[str, object]"; expected "bool | None"  [arg-type]
+src\shared\browser_core\factory.py:62: error: Argument 1 to "launch" of "BrowserType" has incompatible type "**dict[str, object]"; expected "float | None"  [arg-type]
+src\shared\browser_core\factory.py:62: error: Argument 1 to "launch" of "BrowserType" has incompatible type "**dict[str, object]"; expected "dict[str, str | float | bool] | None"  [arg-type]
+src\shared\browser_core\factory.py:62: error: Argument 1 to "launch" of "BrowserType" has incompatible type "**dict[str, object]"; expected "ProxySettings | None"  [arg-type]
+src\shared\browser_core\factory.py:66: error: Incompatible default for argument "user_agent" (default has type "None", argument has type "str")  [assignment]
+src\shared\browser_core\factory.py:66: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\shared\browser_core\factory.py:66: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\shared\browser_core\factory.py:89: error: Function is missing a return type annotation  [no-untyped-def]
+src\shared\browser_core\factory.py:89: note: Use "-> None" if function does not return a value
+tests\test_stealth_core.py:7: error: Function is missing a return type annotation  [no-untyped-def]
+tests\test_stealth_core.py:7: note: Use "-> None" if function does not return a value
+tests\test_stealth_core.py:43: error: Call to untyped function "stop" in typed context  [no-untyped-call]
+src\core\browser.py:12: error: Function is missing a return type annotation  [no-untyped-def]
+src\core\browser.py:12: note: Use "-> None" if function does not return a value
+src\core\browser.py:32: error: Argument "user_agent" to "create_context" of "BrowserCore" has incompatible type "str | None"; expected "str"  [arg-type]
+src\core\browser.py:36: error: Call to untyped function "stop" in typed context  [no-untyped-call]
+src\core\browser.py:44: error: Call to untyped function "LeonardoBrowserFactory" in typed context  [no-untyped-call]
+src\auth\email_login.py:32: error: Call to untyped function "start_listening" in typed context  [no-untyped-call]
+inspect_selectors.py:6: error: Function is missing a return type annotation  [no-untyped-def]
+inspect_selectors.py:6: note: Use "-> None" if function does not return a value
+inspect_selectors.py:45: error: Call to untyped function "inspect_page" in typed context  [no-untyped-call]
+tests\test_login_flow.py:7: error: Function is missing a return type annotation  [no-untyped-def]
+tests\test_login_flow.py:7: note: Use "-> None" if function does not return a value
+Found 49 errors in 12 files (checked 21 source files)

@@ -1,0 +1,393 @@
+2026-02-06 19:53:39.550 | INFO     | src.main:lifespan:38 - 📡 Service Starting...
+2026-02-06 19:53:39.550 | INFO     | src.core.browser:start:21 - 🚀 Starting Async Browser Factory...
+2026-02-06 19:53:39.975 | INFO     | src.core.browser:start:52 - ✅ Browser started (System Chrome - Maximum Stealth).
+2026-02-06 19:54:18.175 | INFO     | src.main:login:62 - 🔑 Login request received for strategy: email
+2026-02-06 19:54:18.262 | INFO     | src.auth.email_login:login:21 - 📧 Attempting Email Login for twoj_email@example.com
+2026-02-06 19:54:18.262 | INFO     | src.utils.cookie_warmer:warm_via_google:31 - 🔥 Warming session via Google...
+2026-02-06 19:54:32.715 | INFO     | src.utils.cookie_warmer:warm_via_google:62 - ✅ Session warmed successfully!
+2026-02-06 19:54:36.858 | ERROR    | src.auth.email_login:login:72 - ❌ Login failed: 'Locator' object is not callable
+2026-02-06 19:54:37.301 | ERROR    | src.main:login:104 - ❌ Login process failed
+Traceback (most recent call last):
+
+  File "C:\Users\user\PycharmProjects\Bot_mail_creator\leonardo_auth_service\run.py", line 30, in <module>
+    uvicorn.run(
+    │       └ <function run at 0x0000028DB867B380>
+    └ <module 'uvicorn' from 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\uvicorn\\__init__.py'>
+
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\uvicorn\main.py", line 594, in run
+    server.run()
+    │      └ <function Server.run at 0x0000028DB867AC00>
+    └ <uvicorn.server.Server object at 0x0000028DB93570E0>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\uvicorn\server.py", line 67, in run
+    return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+           │           │    │             │                      │    │      └ <function Config.get_loop_factory at 0x0000028DB86384A0>
+           │           │    │             │                      │    └ <uvicorn.config.Config object at 0x0000028DB87F02F0>
+           │           │    │             │                      └ <uvicorn.server.Server object at 0x0000028DB93570E0>
+           │           │    │             └ None
+           │           │    └ <function Server.serve at 0x0000028DB867ACA0>
+           │           └ <uvicorn.server.Server object at 0x0000028DB93570E0>
+           └ <function run at 0x0000028DB7E5DF80>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py", line 195, in run
+    return runner.run(main)
+           │      │   └ <coroutine object Server.serve at 0x0000028DB94435A0>
+           │      └ <function Runner.run at 0x0000028DB7F48680>
+           └ <asyncio.runners.Runner object at 0x0000028DB9357380>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           │    │     │                  └ <Task pending name='Task-1' coro=<Server.serve() running at C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-pa...
+           │    │     └ <function BaseEventLoop.run_until_complete at 0x0000028DB7F46200>
+           │    └ <ProactorEventLoop running=True closed=False debug=False>
+           └ <asyncio.runners.Runner object at 0x0000028DB9357380>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 712, in run_until_complete
+    self.run_forever()
+    │    └ <function BaseEventLoop.run_forever at 0x0000028DB7F46160>
+    └ <ProactorEventLoop running=True closed=False debug=False>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 683, in run_forever
+    self._run_once()
+    │    └ <function BaseEventLoop._run_once at 0x0000028DB7F47F60>
+    └ <ProactorEventLoop running=True closed=False debug=False>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 2050, in _run_once
+    handle._run()
+    │      └ <function Handle._run at 0x0000028DB7E5EE80>
+    └ <Handle Task.task_wakeup()>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\asyncio\events.py", line 89, in _run
+    self._context.run(self._callback, *self._args)
+    │    │            │    │           │    └ <member '_args' of 'Handle' objects>
+    │    │            │    │           └ <Handle Task.task_wakeup()>
+    │    │            │    └ <member '_callback' of 'Handle' objects>
+    │    │            └ <Handle Task.task_wakeup()>
+    │    └ <member '_context' of 'Handle' objects>
+    └ <Handle Task.task_wakeup()>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\uvicorn\protocols\http\httptools_impl.py", line 416, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+                   └ <uvicorn.middleware.proxy_headers.ProxyHeadersMiddleware object at 0x0000028DB9BC1160>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+                 │    │   │      │        └ <bound method RequestResponseCycle.send of <uvicorn.protocols.http.httptools_impl.RequestResponseCycle object at 0x0000028DB9...
+                 │    │   │      └ <bound method RequestResponseCycle.receive of <uvicorn.protocols.http.httptools_impl.RequestResponseCycle object at 0x0000028...
+                 │    │   └ {'type': 'http', 'asgi': {'version': '3.0', 'spec_version': '2.3'}, 'http_version': '1.1', 'server': ('127.0.0.1', 8000), 'cl...
+                 │    └ <fastapi.applications.FastAPI object at 0x0000028DB9967770>
+                 └ <uvicorn.middleware.proxy_headers.ProxyHeadersMiddleware object at 0x0000028DB9BC1160>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\fastapi\applications.py", line 1138, in __call__
+    await super().__call__(scope, receive, send)
+                           │      │        └ <bound method RequestResponseCycle.send of <uvicorn.protocols.http.httptools_impl.RequestResponseCycle object at 0x0000028DB9...
+                           │      └ <bound method RequestResponseCycle.receive of <uvicorn.protocols.http.httptools_impl.RequestResponseCycle object at 0x0000028...
+                           └ {'type': 'http', 'asgi': {'version': '3.0', 'spec_version': '2.3'}, 'http_version': '1.1', 'server': ('127.0.0.1', 8000), 'cl...
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\starlette\applications.py", line 107, in __call__
+    await self.middleware_stack(scope, receive, send)
+          │    │                │      │        └ <bound method RequestResponseCycle.send of <uvicorn.protocols.http.httptools_impl.RequestResponseCycle object at 0x0000028DB9...
+          │    │                │      └ <bound method RequestResponseCycle.receive of <uvicorn.protocols.http.httptools_impl.RequestResponseCycle object at 0x0000028...
+          │    │                └ {'type': 'http', 'asgi': {'version': '3.0', 'spec_version': '2.3'}, 'http_version': '1.1', 'server': ('127.0.0.1', 8000), 'cl...
+          │    └ <starlette.middleware.errors.ServerErrorMiddleware object at 0x0000028DB9BC1BE0>
+          └ <fastapi.applications.FastAPI object at 0x0000028DB9967770>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+          │    │   │      │        └ <function ServerErrorMiddleware.__call__.<locals>._send at 0x0000028DB9E54B80>
+          │    │   │      └ <bound method RequestResponseCycle.receive of <uvicorn.protocols.http.httptools_impl.RequestResponseCycle object at 0x0000028...
+          │    │   └ {'type': 'http', 'asgi': {'version': '3.0', 'spec_version': '2.3'}, 'http_version': '1.1', 'server': ('127.0.0.1', 8000), 'cl...
+          │    └ <starlette.middleware.exceptions.ExceptionMiddleware object at 0x0000028DB9BC1A90>
+          └ <starlette.middleware.errors.ServerErrorMiddleware object at 0x0000028DB9BC1BE0>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+          │                            │    │    │     │      │        └ <function ServerErrorMiddleware.__call__.<locals>._send at 0x0000028DB9E54B80>
+          │                            │    │    │     │      └ <bound method RequestResponseCycle.receive of <uvicorn.protocols.http.httptools_impl.RequestResponseCycle object at 0x0000028...
+          │                            │    │    │     └ {'type': 'http', 'asgi': {'version': '3.0', 'spec_version': '2.3'}, 'http_version': '1.1', 'server': ('127.0.0.1', 8000), 'cl...
+          │                            │    │    └ <starlette.requests.Request object at 0x0000028DB9E8C6E0>
+          │                            │    └ <fastapi.middleware.asyncexitstack.AsyncExitStackMiddleware object at 0x0000028DB9BC1940>
+          │                            └ <starlette.middleware.exceptions.ExceptionMiddleware object at 0x0000028DB9BC1A90>
+          └ <function wrap_app_handling_exceptions at 0x0000028DB97CD300>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+          │   │      │        └ <function wrap_app_handling_exceptions.<locals>.wrapped_app.<locals>.sender at 0x0000028DB9E54CC0>
+          │   │      └ <bound method RequestResponseCycle.receive of <uvicorn.protocols.http.httptools_impl.RequestResponseCycle object at 0x0000028...
+          │   └ {'type': 'http', 'asgi': {'version': '3.0', 'spec_version': '2.3'}, 'http_version': '1.1', 'server': ('127.0.0.1', 8000), 'cl...
+          └ <fastapi.middleware.asyncexitstack.AsyncExitStackMiddleware object at 0x0000028DB9BC1940>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+          │    │   │      │        └ <function wrap_app_handling_exceptions.<locals>.wrapped_app.<locals>.sender at 0x0000028DB9E54CC0>
+          │    │   │      └ <bound method RequestResponseCycle.receive of <uvicorn.protocols.http.httptools_impl.RequestResponseCycle object at 0x0000028...
+          │    │   └ {'type': 'http', 'asgi': {'version': '3.0', 'spec_version': '2.3'}, 'http_version': '1.1', 'server': ('127.0.0.1', 8000), 'cl...
+          │    └ <fastapi.routing.APIRouter object at 0x0000028DB9A4B9D0>
+          └ <fastapi.middleware.asyncexitstack.AsyncExitStackMiddleware object at 0x0000028DB9BC1940>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\starlette\routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+          │    │                │      │        └ <function wrap_app_handling_exceptions.<locals>.wrapped_app.<locals>.sender at 0x0000028DB9E54CC0>
+          │    │                │      └ <bound method RequestResponseCycle.receive of <uvicorn.protocols.http.httptools_impl.RequestResponseCycle object at 0x0000028...
+          │    │                └ {'type': 'http', 'asgi': {'version': '3.0', 'spec_version': '2.3'}, 'http_version': '1.1', 'server': ('127.0.0.1', 8000), 'cl...
+          │    └ <bound method Router.app of <fastapi.routing.APIRouter object at 0x0000028DB9A4B9D0>>
+          └ <fastapi.routing.APIRouter object at 0x0000028DB9A4B9D0>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\starlette\routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+          │     │      │      │        └ <function wrap_app_handling_exceptions.<locals>.wrapped_app.<locals>.sender at 0x0000028DB9E54CC0>
+          │     │      │      └ <bound method RequestResponseCycle.receive of <uvicorn.protocols.http.httptools_impl.RequestResponseCycle object at 0x0000028...
+          │     │      └ {'type': 'http', 'asgi': {'version': '3.0', 'spec_version': '2.3'}, 'http_version': '1.1', 'server': ('127.0.0.1', 8000), 'cl...
+          │     └ <function Route.handle at 0x0000028DB97CEB60>
+          └ APIRoute(path='/auth/login', name='login', methods=['POST'])
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\starlette\routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+          │    │   │      │        └ <function wrap_app_handling_exceptions.<locals>.wrapped_app.<locals>.sender at 0x0000028DB9E54CC0>
+          │    │   │      └ <bound method RequestResponseCycle.receive of <uvicorn.protocols.http.httptools_impl.RequestResponseCycle object at 0x0000028...
+          │    │   └ {'type': 'http', 'asgi': {'version': '3.0', 'spec_version': '2.3'}, 'http_version': '1.1', 'server': ('127.0.0.1', 8000), 'cl...
+          │    └ <function request_response.<locals>.app at 0x0000028DB9B15260>
+          └ APIRoute(path='/auth/login', name='login', methods=['POST'])
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\fastapi\routing.py", line 124, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+          │                            │    │        │      │        └ <function wrap_app_handling_exceptions.<locals>.wrapped_app.<locals>.sender at 0x0000028DB9E54CC0>
+          │                            │    │        │      └ <bound method RequestResponseCycle.receive of <uvicorn.protocols.http.httptools_impl.RequestResponseCycle object at 0x0000028...
+          │                            │    │        └ {'type': 'http', 'asgi': {'version': '3.0', 'spec_version': '2.3'}, 'http_version': '1.1', 'server': ('127.0.0.1', 8000), 'cl...
+          │                            │    └ <starlette.requests.Request object at 0x0000028DB9B279D0>
+          │                            └ <function request_response.<locals>.app.<locals>.app at 0x0000028DB9E54D60>
+          └ <function wrap_app_handling_exceptions at 0x0000028DB97CD300>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+          │   │      │        └ <function wrap_app_handling_exceptions.<locals>.wrapped_app.<locals>.sender at 0x0000028DB9E54EA0>
+          │   │      └ <bound method RequestResponseCycle.receive of <uvicorn.protocols.http.httptools_impl.RequestResponseCycle object at 0x0000028...
+          │   └ {'type': 'http', 'asgi': {'version': '3.0', 'spec_version': '2.3'}, 'http_version': '1.1', 'server': ('127.0.0.1', 8000), 'cl...
+          └ <function request_response.<locals>.app.<locals>.app at 0x0000028DB9E54D60>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\fastapi\routing.py", line 110, in app
+    response = await f(request)
+                     │ └ <starlette.requests.Request object at 0x0000028DB9B279D0>
+                     └ <function get_request_handler.<locals>.app at 0x0000028DB9B153A0>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\fastapi\routing.py", line 432, in app
+    raw_response = await run_endpoint_function(
+                         └ <function run_endpoint_function at 0x0000028DB97E4F40>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\fastapi\routing.py", line 320, in run_endpoint_function
+    return await dependant.call(**values)
+                 │         │      └ {'request': LoginRequest(strategy='email', email='twoj_email@example.com', password='twoje_haslo', use_existing_profile=False)}
+                 │         └ <function login at 0x0000028DB9B151C0>
+                 └ Dependant(path_params=[], query_params=[], header_params=[], cookie_params=[], body_params=[ModelField(field_info=Body(Pydant...
+
+> File "C:\Users\user\PycharmProjects\Bot_mail_creator\leonardo_auth_service\src\main.py", line 91, in login
+    session_data = await provider.login(page, credentials)
+                         │        │     │     └ {'email': 'twoj_email@example.com', 'password': 'twoje_haslo'}
+                         │        │     └ <Page url='https://app.leonardo.ai/auth/login'>
+                         │        └ <function EmailLoginStrategy.login at 0x0000028DB9B14040>
+                         └ <src.auth.email_login.EmailLoginStrategy object at 0x0000028DB9E8D010>
+
+  File "C:\Users\user\PycharmProjects\Bot_mail_creator\leonardo_auth_service\src\auth\email_login.py", line 38, in login
+    email_input = page.get_by_placeholder("Email", exact=False).first()
+                  │    └ <function Page.get_by_placeholder at 0x0000028DB9AEF880>
+                  └ <Page url='https://app.leonardo.ai/auth/login'>
+
+TypeError: 'Locator' object is not callable
+2026-02-06 19:54:51.981 | INFO     | src.main:lifespan:42 - 🔌 Service Shutting Down...
+2026-02-06 19:55:15.065 | INFO     | src.main:lifespan:38 - 📡 Service Starting...
+2026-02-06 19:55:15.065 | INFO     | src.core.browser:start:21 - 🚀 Starting Async Browser Factory...
+2026-02-06 19:55:15.481 | INFO     | src.core.browser:start:52 - ✅ Browser started (System Chrome - Maximum Stealth).
+2026-02-06 19:55:35.974 | INFO     | src.main:login:62 - 🔑 Login request received for strategy: email
+2026-02-06 19:55:36.059 | INFO     | src.auth.email_login:login:21 - 📧 Attempting Email Login for twoj_email@example.com
+2026-02-06 19:55:36.060 | INFO     | src.utils.cookie_warmer:warm_via_google:31 - 🔥 Warming session via Google...
+2026-02-06 19:55:49.828 | INFO     | src.utils.cookie_warmer:warm_via_google:62 - ✅ Session warmed successfully!
+2026-02-06 19:56:24.553 | ERROR    | src.auth.email_login:login:72 - ❌ Login failed: Locator.focus: Timeout 30000ms exceeded.
+Call log:
+  - waiting for get_by_placeholder("Email").first
+
+2026-02-06 19:56:24.994 | ERROR    | src.main:login:104 - ❌ Login process failed
+Traceback (most recent call last):
+
+  File "C:\Users\user\PycharmProjects\Bot_mail_creator\leonardo_auth_service\run.py", line 30, in <module>
+    uvicorn.run(
+    │       └ <function run at 0x000001B8A46DB380>
+    └ <module 'uvicorn' from 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\uvicorn\\__init__.py'>
+
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\uvicorn\main.py", line 594, in run
+    server.run()
+    │      └ <function Server.run at 0x000001B8A46DAC00>
+    └ <uvicorn.server.Server object at 0x000001B8A54070E0>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\uvicorn\server.py", line 67, in run
+    return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+           │           │    │             │                      │    │      └ <function Config.get_loop_factory at 0x000001B8A46984A0>
+           │           │    │             │                      │    └ <uvicorn.config.Config object at 0x000001B8A48702F0>
+           │           │    │             │                      └ <uvicorn.server.Server object at 0x000001B8A54070E0>
+           │           │    │             └ None
+           │           │    └ <function Server.serve at 0x000001B8A46DACA0>
+           │           └ <uvicorn.server.Server object at 0x000001B8A54070E0>
+           └ <function run at 0x000001B8A3E6DF80>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py", line 195, in run
+    return runner.run(main)
+           │      │   └ <coroutine object Server.serve at 0x000001B8A54F35A0>
+           │      └ <function Runner.run at 0x000001B8A3F58680>
+           └ <asyncio.runners.Runner object at 0x000001B8A5407380>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           │    │     │                  └ <Task pending name='Task-1' coro=<Server.serve() running at C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-pa...
+           │    │     └ <function BaseEventLoop.run_until_complete at 0x000001B8A3F56200>
+           │    └ <ProactorEventLoop running=True closed=False debug=False>
+           └ <asyncio.runners.Runner object at 0x000001B8A5407380>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 712, in run_until_complete
+    self.run_forever()
+    │    └ <function BaseEventLoop.run_forever at 0x000001B8A3F56160>
+    └ <ProactorEventLoop running=True closed=False debug=False>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 683, in run_forever
+    self._run_once()
+    │    └ <function BaseEventLoop._run_once at 0x000001B8A3F57F60>
+    └ <ProactorEventLoop running=True closed=False debug=False>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 2050, in _run_once
+    handle._run()
+    │      └ <function Handle._run at 0x000001B8A3E6EE80>
+    └ <Handle Task.task_wakeup()>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\asyncio\events.py", line 89, in _run
+    self._context.run(self._callback, *self._args)
+    │    │            │    │           │    └ <member '_args' of 'Handle' objects>
+    │    │            │    │           └ <Handle Task.task_wakeup()>
+    │    │            │    └ <member '_callback' of 'Handle' objects>
+    │    │            └ <Handle Task.task_wakeup()>
+    │    └ <member '_context' of 'Handle' objects>
+    └ <Handle Task.task_wakeup()>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\uvicorn\protocols\http\httptools_impl.py", line 416, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+                   └ <uvicorn.middleware.proxy_headers.ProxyHeadersMiddleware object at 0x000001B8A5595BE0>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\uvicorn\middleware\proxy_headers.py", line 60, in __call__
+    return await self.app(scope, receive, send)
+                 │    │   │      │        └ <bound method RequestResponseCycle.send of <uvicorn.protocols.http.httptools_impl.RequestResponseCycle object at 0x000001B8A6...
+                 │    │   │      └ <bound method RequestResponseCycle.receive of <uvicorn.protocols.http.httptools_impl.RequestResponseCycle object at 0x000001B...
+                 │    │   └ {'type': 'http', 'asgi': {'version': '3.0', 'spec_version': '2.3'}, 'http_version': '1.1', 'server': ('127.0.0.1', 8000), 'cl...
+                 │    └ <fastapi.applications.FastAPI object at 0x000001B8A5A2B8C0>
+                 └ <uvicorn.middleware.proxy_headers.ProxyHeadersMiddleware object at 0x000001B8A5595BE0>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\fastapi\applications.py", line 1138, in __call__
+    await super().__call__(scope, receive, send)
+                           │      │        └ <bound method RequestResponseCycle.send of <uvicorn.protocols.http.httptools_impl.RequestResponseCycle object at 0x000001B8A6...
+                           │      └ <bound method RequestResponseCycle.receive of <uvicorn.protocols.http.httptools_impl.RequestResponseCycle object at 0x000001B...
+                           └ {'type': 'http', 'asgi': {'version': '3.0', 'spec_version': '2.3'}, 'http_version': '1.1', 'server': ('127.0.0.1', 8000), 'cl...
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\starlette\applications.py", line 107, in __call__
+    await self.middleware_stack(scope, receive, send)
+          │    │                │      │        └ <bound method RequestResponseCycle.send of <uvicorn.protocols.http.httptools_impl.RequestResponseCycle object at 0x000001B8A6...
+          │    │                │      └ <bound method RequestResponseCycle.receive of <uvicorn.protocols.http.httptools_impl.RequestResponseCycle object at 0x000001B...
+          │    │                └ {'type': 'http', 'asgi': {'version': '3.0', 'spec_version': '2.3'}, 'http_version': '1.1', 'server': ('127.0.0.1', 8000), 'cl...
+          │    └ <starlette.middleware.errors.ServerErrorMiddleware object at 0x000001B8A5C81BE0>
+          └ <fastapi.applications.FastAPI object at 0x000001B8A5A2B8C0>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\starlette\middleware\errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+          │    │   │      │        └ <function ServerErrorMiddleware.__call__.<locals>._send at 0x000001B8A5CFD3A0>
+          │    │   │      └ <bound method RequestResponseCycle.receive of <uvicorn.protocols.http.httptools_impl.RequestResponseCycle object at 0x000001B...
+          │    │   └ {'type': 'http', 'asgi': {'version': '3.0', 'spec_version': '2.3'}, 'http_version': '1.1', 'server': ('127.0.0.1', 8000), 'cl...
+          │    └ <starlette.middleware.exceptions.ExceptionMiddleware object at 0x000001B8A5C81A90>
+          └ <starlette.middleware.errors.ServerErrorMiddleware object at 0x000001B8A5C81BE0>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\starlette\middleware\exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+          │                            │    │    │     │      │        └ <function ServerErrorMiddleware.__call__.<locals>._send at 0x000001B8A5CFD3A0>
+          │                            │    │    │     │      └ <bound method RequestResponseCycle.receive of <uvicorn.protocols.http.httptools_impl.RequestResponseCycle object at 0x000001B...
+          │                            │    │    │     └ {'type': 'http', 'asgi': {'version': '3.0', 'spec_version': '2.3'}, 'http_version': '1.1', 'server': ('127.0.0.1', 8000), 'cl...
+          │                            │    │    └ <starlette.requests.Request object at 0x000001B8A6F1C6E0>
+          │                            │    └ <fastapi.middleware.asyncexitstack.AsyncExitStackMiddleware object at 0x000001B8A5C81940>
+          │                            └ <starlette.middleware.exceptions.ExceptionMiddleware object at 0x000001B8A5C81A90>
+          └ <function wrap_app_handling_exceptions at 0x000001B8A5889300>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+          │   │      │        └ <function wrap_app_handling_exceptions.<locals>.wrapped_app.<locals>.sender at 0x000001B8A6EE4CC0>
+          │   │      └ <bound method RequestResponseCycle.receive of <uvicorn.protocols.http.httptools_impl.RequestResponseCycle object at 0x000001B...
+          │   └ {'type': 'http', 'asgi': {'version': '3.0', 'spec_version': '2.3'}, 'http_version': '1.1', 'server': ('127.0.0.1', 8000), 'cl...
+          └ <fastapi.middleware.asyncexitstack.AsyncExitStackMiddleware object at 0x000001B8A5C81940>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\fastapi\middleware\asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+          │    │   │      │        └ <function wrap_app_handling_exceptions.<locals>.wrapped_app.<locals>.sender at 0x000001B8A6EE4CC0>
+          │    │   │      └ <bound method RequestResponseCycle.receive of <uvicorn.protocols.http.httptools_impl.RequestResponseCycle object at 0x000001B...
+          │    │   └ {'type': 'http', 'asgi': {'version': '3.0', 'spec_version': '2.3'}, 'http_version': '1.1', 'server': ('127.0.0.1', 8000), 'cl...
+          │    └ <fastapi.routing.APIRouter object at 0x000001B8A5B0B9D0>
+          └ <fastapi.middleware.asyncexitstack.AsyncExitStackMiddleware object at 0x000001B8A5C81940>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\starlette\routing.py", line 716, in __call__
+    await self.middleware_stack(scope, receive, send)
+          │    │                │      │        └ <function wrap_app_handling_exceptions.<locals>.wrapped_app.<locals>.sender at 0x000001B8A6EE4CC0>
+          │    │                │      └ <bound method RequestResponseCycle.receive of <uvicorn.protocols.http.httptools_impl.RequestResponseCycle object at 0x000001B...
+          │    │                └ {'type': 'http', 'asgi': {'version': '3.0', 'spec_version': '2.3'}, 'http_version': '1.1', 'server': ('127.0.0.1', 8000), 'cl...
+          │    └ <bound method Router.app of <fastapi.routing.APIRouter object at 0x000001B8A5B0B9D0>>
+          └ <fastapi.routing.APIRouter object at 0x000001B8A5B0B9D0>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\starlette\routing.py", line 736, in app
+    await route.handle(scope, receive, send)
+          │     │      │      │        └ <function wrap_app_handling_exceptions.<locals>.wrapped_app.<locals>.sender at 0x000001B8A6EE4CC0>
+          │     │      │      └ <bound method RequestResponseCycle.receive of <uvicorn.protocols.http.httptools_impl.RequestResponseCycle object at 0x000001B...
+          │     │      └ {'type': 'http', 'asgi': {'version': '3.0', 'spec_version': '2.3'}, 'http_version': '1.1', 'server': ('127.0.0.1', 8000), 'cl...
+          │     └ <function Route.handle at 0x000001B8A588AB60>
+          └ APIRoute(path='/auth/login', name='login', methods=['POST'])
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\starlette\routing.py", line 290, in handle
+    await self.app(scope, receive, send)
+          │    │   │      │        └ <function wrap_app_handling_exceptions.<locals>.wrapped_app.<locals>.sender at 0x000001B8A6EE4CC0>
+          │    │   │      └ <bound method RequestResponseCycle.receive of <uvicorn.protocols.http.httptools_impl.RequestResponseCycle object at 0x000001B...
+          │    │   └ {'type': 'http', 'asgi': {'version': '3.0', 'spec_version': '2.3'}, 'http_version': '1.1', 'server': ('127.0.0.1', 8000), 'cl...
+          │    └ <function request_response.<locals>.app at 0x000001B8A5BE5260>
+          └ APIRoute(path='/auth/login', name='login', methods=['POST'])
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\fastapi\routing.py", line 124, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+          │                            │    │        │      │        └ <function wrap_app_handling_exceptions.<locals>.wrapped_app.<locals>.sender at 0x000001B8A6EE4CC0>
+          │                            │    │        │      └ <bound method RequestResponseCycle.receive of <uvicorn.protocols.http.httptools_impl.RequestResponseCycle object at 0x000001B...
+          │                            │    │        └ {'type': 'http', 'asgi': {'version': '3.0', 'spec_version': '2.3'}, 'http_version': '1.1', 'server': ('127.0.0.1', 8000), 'cl...
+          │                            │    └ <starlette.requests.Request object at 0x000001B8A5BF39D0>
+          │                            └ <function request_response.<locals>.app.<locals>.app at 0x000001B8A6EE4D60>
+          └ <function wrap_app_handling_exceptions at 0x000001B8A5889300>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\starlette\_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+          │   │      │        └ <function wrap_app_handling_exceptions.<locals>.wrapped_app.<locals>.sender at 0x000001B8A6EE4EA0>
+          │   │      └ <bound method RequestResponseCycle.receive of <uvicorn.protocols.http.httptools_impl.RequestResponseCycle object at 0x000001B...
+          │   └ {'type': 'http', 'asgi': {'version': '3.0', 'spec_version': '2.3'}, 'http_version': '1.1', 'server': ('127.0.0.1', 8000), 'cl...
+          └ <function request_response.<locals>.app.<locals>.app at 0x000001B8A6EE4D60>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\fastapi\routing.py", line 110, in app
+    response = await f(request)
+                     │ └ <starlette.requests.Request object at 0x000001B8A5BF39D0>
+                     └ <function get_request_handler.<locals>.app at 0x000001B8A5BE53A0>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\fastapi\routing.py", line 432, in app
+    raw_response = await run_endpoint_function(
+                         └ <function run_endpoint_function at 0x000001B8A58A4F40>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\fastapi\routing.py", line 320, in run_endpoint_function
+    return await dependant.call(**values)
+                 │         │      └ {'request': LoginRequest(strategy='email', email='twoj_email@example.com', password='twoje_haslo', use_existing_profile=False)}
+                 │         └ <function login at 0x000001B8A5BE51C0>
+                 └ Dependant(path_params=[], query_params=[], header_params=[], cookie_params=[], body_params=[ModelField(field_info=Body(Pydant...
+
+> File "C:\Users\user\PycharmProjects\Bot_mail_creator\leonardo_auth_service\src\main.py", line 91, in login
+    session_data = await provider.login(page, credentials)
+                         │        │     │     └ {'email': 'twoj_email@example.com', 'password': 'twoje_haslo'}
+                         │        │     └ <Page url='https://app.leonardo.ai/auth/login'>
+                         │        └ <function EmailLoginStrategy.login at 0x000001B8A5BE40E0>
+                         └ <src.auth.email_login.EmailLoginStrategy object at 0x000001B8A6F1D010>
+
+  File "C:\Users\user\PycharmProjects\Bot_mail_creator\leonardo_auth_service\src\auth\email_login.py", line 46, in login
+    await Humanizer.type_like_human(email_input, email)
+          │         │               │            └ 'twoj_email@example.com'
+          │         │               └ <Locator frame=<Frame name= url='https://app.leonardo.ai/auth/login'> selector='internal:attr=[placeholder="Email"i] >> nth=0'>
+          │         └ <staticmethod(<function Humanizer.type_like_human at 0x000001B8A5BE4220>)>
+          └ <class 'src.utils.humanizer.Humanizer'>
+
+  File "C:\Users\user\PycharmProjects\Bot_mail_creator\leonardo_auth_service\src\utils\humanizer.py", line 15, in type_like_human
+    await locator.focus()
+          │       └ <function Locator.focus at 0x000001B8A5BC2200>
+          └ <Locator frame=<Frame name= url='https://app.leonardo.ai/auth/login'> selector='internal:attr=[placeholder="Email"i] >> nth=0'>
+
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\playwright\async_api\_generated.py", line 16677, in focus
+    return mapping.from_maybe_impl(await self._impl_obj.focus(timeout=timeout))
+           │       │                     │    │         │             └ None
+           │       │                     │    │         └ <function Locator.focus at 0x000001B8A5AF2160>
+           │       │                     │    └ <Locator frame=<Frame name= url='https://app.leonardo.ai/auth/login'> selector='internal:attr=[placeholder="Email"i] >> nth=0'>
+           │       │                     └ <Locator frame=<Frame name= url='https://app.leonardo.ai/auth/login'> selector='internal:attr=[placeholder="Email"i] >> nth=0'>
+           │       └ <function ImplToApiMapping.from_maybe_impl at 0x000001B8A59BFEC0>
+           └ <playwright._impl._impl_to_api_mapping.ImplToApiMapping object at 0x000001B8A5A5BE00>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\playwright\_impl\_locator.py", line 382, in focus
+    return await self._frame.focus(self._selector, strict=True, **params)
+                 │    │      │     │    │                         └ {}
+                 │    │      │     │    └ 'internal:attr=[placeholder="Email"i] >> nth=0'
+                 │    │      │     └ <Locator frame=<Frame name= url='https://app.leonardo.ai/auth/login'> selector='internal:attr=[placeholder="Email"i] >> nth=0'>
+                 │    │      └ <function Frame.focus at 0x000001B8A5B3CE00>
+                 │    └ <Frame name= url='https://app.leonardo.ai/auth/login'>
+                 └ <Locator frame=<Frame name= url='https://app.leonardo.ai/auth/login'> selector='internal:attr=[placeholder="Email"i] >> nth=0'>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\playwright\_impl\_frame.py", line 683, in focus
+    await self._channel.send("focus", self._timeout, locals_to_params(locals()))
+          │    │        │             │    │         └ <function locals_to_params at 0x000001B8A5A06340>
+          │    │        │             │    └ <function Frame._timeout at 0x000001B8A5AFB420>
+          │    │        │             └ <Frame name= url='https://app.leonardo.ai/auth/login'>
+          │    │        └ <function Channel.send at 0x000001B8A2002340>
+          │    └ <playwright._impl._connection.Channel object at 0x000001B8A5CA3E10>
+          └ <Frame name= url='https://app.leonardo.ai/auth/login'>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\playwright\_impl\_connection.py", line 69, in send
+    return await self._connection.wrap_api_call(
+                 │    │           └ <function Connection.wrap_api_call at 0x000001B8A5A2D4E0>
+                 │    └ <playwright._impl._connection.Connection object at 0x000001B8A5C82120>
+                 └ <playwright._impl._connection.Channel object at 0x000001B8A5CA3E10>
+  File "C:\Users\user\AppData\Local\Programs\Python\Python313\Lib\site-packages\playwright\_impl\_connection.py", line 559, in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+          │                       └ {'frames': [{'file': 'C:\\Users\\user\\PycharmProjects\\Bot_mail_creator\\leonardo_auth_service\\src\\utils\\humanizer.py', '...
+          └ <function rewrite_error at 0x000001B8A59BCD60>
+
+playwright._impl._errors.TimeoutError: Locator.focus: Timeout 30000ms exceeded.
+Call log:
+  - waiting for get_by_placeholder("Email").first
+
+2026-02-06 20:02:04.778 | INFO     | src.main:lifespan:42 - 🔌 Service Shutting Down...

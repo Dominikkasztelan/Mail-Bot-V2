@@ -1,0 +1,42 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.13.11, pytest-9.0.2, pluggy-1.6.0
+rootdir: C:\Users\user\PycharmProjects\Bot_mail_creator\leonardo_auth_service
+configfile: pyproject.toml
+plugins: anyio-4.12.1, asyncio-1.3.0, base-url-2.1.0, cov-7.0.0, mock-3.15.1, playwright-0.7.2
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 1 item
+
+tests\test_login_flow.py 
+[STEP 1] Initializing Browser Factory...
+[STEP 2] Creating Browser Context...
+[STEP 3] Starting Cookie Warming via Google...
+  -> Warming status: True
+[STEP 4] Navigating to Leonardo.ai Login Lobby...
+  -> Arrived at: https://app.leonardo.ai/auth/login
+[STEP 5] Checking for Cookie Consent Modal...
+  -> No cookie consent visible (already accepted or not shown).
+[STEP 6] Checking for 'Continue with Email' button...
+  -> Button found. Clicking...
+[STEP 7] Verifying Credentials Form Fields...
+  -> Email field visible: False
+  -> Password field visible: False
+[CLEANUP] Closing browser...
+F
+
+================================== FAILURES ===================================
+_______________________ test_leonardo_login_flow_visual _______________________
+tests\test_login_flow.py:60: in test_leonardo_login_flow_visual
+    assert is_email_visible, "Email input should be visible after lobby"
+E   AssertionError: Email input should be visible after lobby
+E   assert False
+
+During handling of the above exception, another exception occurred:
+tests\test_login_flow.py:66: in test_leonardo_login_flow_visual
+    print(f"\u274c TEST FAILED at step: {e}")
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\encodings\cp1250.py:19: in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   UnicodeEncodeError: 'charmap' codec can't encode character '\u274c' in position 0: character maps to <undefined>
+=========================== short test summary info ===========================
+FAILED tests/test_login_flow.py::test_leonardo_login_flow_visual - UnicodeEnc...
+============================= 1 failed in 24.01s ==============================

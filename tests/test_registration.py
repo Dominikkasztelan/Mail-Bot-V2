@@ -17,7 +17,7 @@ class TestRegistrationPageUnit:
     @pytest.fixture
     def reg_page(self, mock_page):
         # Prevent CaptchaSolver init from looking for keys or page issues
-        with patch("src.registration_page.CaptchaSolver") as MockSolver:
+        with patch("src.registration_page.CaptchaSolver"):
             return RegistrationPage(mock_page)
 
     def test_generate_login_variant_logic(self, reg_page):
@@ -66,5 +66,6 @@ class TestRegistrationPageUnit:
 
         reg_page._ensure_unique_identity(identity)
 
-        assert reg_page._check_availability.call_count == 2
+        expected_call_count = 2
+        assert reg_page._check_availability.call_count == expected_call_count
         assert identity['login'] != "taken.login"  # Should have suffix

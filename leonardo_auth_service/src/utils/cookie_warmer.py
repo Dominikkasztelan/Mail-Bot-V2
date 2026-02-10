@@ -2,7 +2,7 @@ import asyncio
 import random
 
 from loguru import logger
-from playwright.async_api import Page
+from patchright.async_api import Page
 
 
 class CookieWarmer:

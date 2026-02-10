@@ -1,6 +1,7 @@
 import asyncio
 import sys
 from pathlib import Path
+
 from loguru import logger
 
 # Add root to sys.path
@@ -42,7 +43,7 @@ TEST_SITES = [
 
 async def test_all_sites():
     logger.info("🎬 Testing stealth on multiple bot detection sites...")
-    
+
     # Use full stealth config
     stealth = StealthConfig(
         spoof_webgl=True,
@@ -50,43 +51,43 @@ async def test_all_sites():
         canvas_noise=True,
         audio_noise=True
     )
-    
+
     # Launch in HEADED mode
     browser = BrowserCore(headless=False, stealth_config=stealth)
-    
+
     try:
         await browser.start()
         context = await browser.create_context()
         page = await context.new_page()
-        
+
         for i, site in enumerate(TEST_SITES, 1):
             logger.info(f"\n{'='*60}")
             logger.info(f"🌐 [{i}/{len(TEST_SITES)}] Testing: {site['name']}")
             logger.info(f"📝 Description: {site['description']}")
             logger.info(f"🔗 URL: {site['url']}")
             logger.info(f"{'='*60}\n")
-            
+
             await page.goto(site['url'])
-            
+
             logger.info(f"✅ Loaded {site['name']}")
-            logger.info(f"⏳ Waiting 15 seconds for you to review the results...")
-            
+            logger.info("⏳ Waiting 15 seconds for you to review the results...")
+
             # Wait 15 seconds per site for user to review
             await asyncio.sleep(15)
-        
+
         logger.info("\n" + "="*60)
         logger.info("✅ All sites tested!")
         logger.info("🔄 Returning to Sannysoft for final review...")
         logger.info("="*60 + "\n")
-        
+
         # Return to Sannysoft for final comparison
         await page.goto(TEST_SITES[0]['url'])
-        
+
         logger.info("👀 Browser will stay open for 300 seconds for final review.")
         logger.info("Press Ctrl+C to close earlier.")
-        
+
         await asyncio.sleep(300)
-        
+
     except KeyboardInterrupt:
         logger.info("\n⚠️  Test interrupted by user")
     except Exception as e:

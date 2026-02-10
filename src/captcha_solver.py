@@ -1,17 +1,17 @@
 # src/captcha_solver.py
-import time
-import random
 import json
+import random
 import re
-from typing import List, Optional, Any, Union
+import time
 
-from playwright.sync_api import Frame, Locator, Page, TimeoutError as PlaywrightTimeout, Error as PlaywrightError
 from google import genai
 from google.genai import types
+from playwright.sync_api import Error as PlaywrightError
+from playwright.sync_api import Frame, Locator, Page
+from playwright.sync_api import TimeoutError as PlaywrightTimeout
 
-from src.config import API_KEYS, RETRY_LIMITS, DELAYS
+from src.config import API_KEYS, DELAYS, RETRY_LIMITS
 from src.logger_config import get_logger
-from src.exceptions import CaptchaSolveError
 
 logger = get_logger(__name__)
 
@@ -29,7 +29,7 @@ class CaptchaSolver:
     - Type Safety
     """
 
-    def __init__(self, page: Optional[Page] = None):
+    def __init__(self, page: Page | None = None):
         """
         Initialize the CaptchaSolver.
 
@@ -37,7 +37,7 @@ class CaptchaSolver:
             page (Optional[Page]): The Playwright Page object.
         """
         self.page = page
-        self.api_keys: List[str] = API_KEYS.get("GEMINI", [])
+        self.api_keys: list[str] = API_KEYS.get("GEMINI", [])
 
         if not self.api_keys:
             logger.critical("❌ No Gemini API keys found in .env! Solver will not function.")
@@ -96,7 +96,7 @@ class CaptchaSolver:
             return True
         return False
 
-    def _find_captcha_target(self, frame: Frame) -> Optional[Locator]:
+    def _find_captcha_target(self, frame: Frame) -> Locator | None:
         """Find the main captcha image or target area."""
         target_selectors = ["#rc-imageselect-target", ".rc-imageselect-payload", "table", "body"]
         for selector in target_selectors:
@@ -139,7 +139,7 @@ class CaptchaSolver:
             logger.error(f"❌ Error during solve round: {e}")
             return False
 
-    def _take_screenshot(self, target: Locator) -> Optional[bytes]:
+    def _take_screenshot(self, target: Locator) -> bytes | None:
         """Take a screenshot of the target element in memory."""
         try:
             return target.screenshot(type='png')
@@ -161,7 +161,7 @@ class CaptchaSolver:
             pass
         return "Select all matching images"
 
-    def _click_tiles(self, frame: Frame, target: Locator, tiles_idx: List[int]) -> None:
+    def _click_tiles(self, frame: Frame, target: Locator, tiles_idx: list[int]) -> None:
         """Click the specified tiles with human-like delays."""
         logger.info(f"👉 Clicking tiles: {tiles_idx}")
 
@@ -248,7 +248,7 @@ class CaptchaSolver:
         except PlaywrightError as e:
             logger.warning(f"⚠️ Tile click error: {e}")
 
-    def _solve_grid(self, image_bytes: bytes, instruction: str) -> List[int]:
+    def _solve_grid(self, image_bytes: bytes, instruction: str) -> list[int]:
         """
         Send image bytes to Gemini and return list of tile indices.
         Uses JSON mode validation.
@@ -290,10 +290,10 @@ class CaptchaSolver:
                 if "```" in clean_json:
                      # Remove code blocks
                     clean_json = clean_json.replace("```json", "").replace("```", "")
-                
+
                 # Additional cleanup for safety
                 clean_json = clean_json.strip()
-                
+
                 # Check if it starts/ends with boolean-like chars if model hallucinated logic
                 if not clean_json.startswith("["):
                      # try to find list

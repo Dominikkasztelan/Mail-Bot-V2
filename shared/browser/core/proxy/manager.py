@@ -7,7 +7,7 @@ class ProxyConfig:
     password: str | None = None
     bypass: str | None = None
 
-    def __init__(self, server: str, username: str | None = None, password: str | None = None, bypass: str | None = None):
+    def __init__(self, server: str, username: str | None = None, password: str | None = None, bypass: str | None = None) -> None:
         self.server = server
         self.username = username
         self.password = password
@@ -25,7 +25,7 @@ class TorProxyProvider(ProxyProvider):
     Provider for local TOR proxy (SOCKS5).
     """
 
-    def __init__(self, port: int = 9050, password: str | None = None):
+    def __init__(self, port: int = 9050, password: str | None = None) -> None:
         self.host = "127.0.0.1"
         self.port = port
         self.password = password

@@ -1,0 +1,6 @@
+﻿C:\Users\user\PycharmProjects\Bot_mail_creator\shared\browser\core\stealth\injector.py:21: error: Missing type parameters for generic type "tuple"  [type-arg]
+C:\Users\user\PycharmProjects\Bot_mail_creator\shared\browser\core\stealth\injector.py:54: error: Function is missing a return type annotation  [no-untyped-def]
+tests\test_login_flow.py:24: error: Argument 1 to "login" of "EmailLoginStrategy" has incompatible type "patchright.async_api._generated.Page"; expected "playwright.async_api._generated.Page"  [arg-type]
+src\main.py:106: error: Argument 1 to "login" of "EmailLoginStrategy" has incompatible type "patchright.async_api._generated.Page"; expected "playwright.async_api._generated.Page"  [arg-type]
+Found 4 errors in 3 files (checked 18 source files)
+

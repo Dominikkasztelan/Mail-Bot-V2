@@ -27,7 +27,7 @@ class LeonardoBrowserFactory:
         headless: bool = False,
         enable_tor: bool = True,
         http_proxies: list[str] | None = None
-    ):
+    ) -> None:
         """
         Initialize Leonardo browser factory.
 

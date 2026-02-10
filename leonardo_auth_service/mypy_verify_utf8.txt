@@ -1,0 +1,12 @@
+﻿src\auth\email_login.py:18: error: Argument 1 of "login" is incompatible with supertype "src.auth.base.AuthProvider"; supertype defines the argument type as "Page"  [override]
+src\auth\email_login.py:18: note: This violates the Liskov substitution principle
+src\auth\email_login.py:18: note: See https://mypy.readthedocs.io/en/stable/common_issues.html#incompatible-overrides
+src\auth\email_login.py:55: error: Argument 1 to "CookieWarmer" has incompatible type "patchright.async_api._generated.Page"; expected "playwright.async_api._generated.Page"  [arg-type]
+src\auth\email_login.py:82: error: Argument 1 to "natural_mouse_move" of "Humanizer" has incompatible type "patchright.async_api._generated.Page"; expected "playwright.async_api._generated.Page"  [arg-type]
+src\auth\email_login.py:99: error: Argument 1 to "type_like_human" of "Humanizer" has incompatible type "patchright.async_api._generated.Locator"; expected "playwright.async_api._generated.Locator"  [arg-type]
+src\auth\email_login.py:114: error: Argument 1 to "type_like_human" of "Humanizer" has incompatible type "patchright.async_api._generated.Locator"; expected "playwright.async_api._generated.Locator"  [arg-type]
+src\auth\email_login.py:134: error: Argument 1 of "is_logged_in" is incompatible with supertype "src.auth.base.AuthProvider"; supertype defines the argument type as "Page"  [override]
+src\auth\email_login.py:134: note: This violates the Liskov substitution principle
+src\auth\email_login.py:134: note: See https://mypy.readthedocs.io/en/stable/common_issues.html#incompatible-overrides
+Found 6 errors in 1 file (checked 18 source files)
+

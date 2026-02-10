@@ -1,10 +1,17 @@
 import multiprocessing
 import sys
+from pathlib import Path
+
+# Add project root to sys.path
+ROOT_DIR = Path(__file__).parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
 from multiprocessing import Process
-from typing import List
 
 # Importy lokalne
 from test_run import run_worker
+
 from src.config import LAUNCHER_CONFIG
 from src.logger_config import get_logger
 
@@ -21,7 +28,7 @@ def main() -> None:
     concurrent_count: int = int(LAUNCHER_CONFIG.get("CONCURRENT_BROWSERS", 1))
 
     logger.info("=" * 60)
-    logger.info(f"🚀 URUCHAMIANIE ZARZĄDCY BOTÓW")
+    logger.info("🚀 URUCHAMIANIE ZARZĄDCY BOTÓW")
     logger.info(f"👉 Liczba instancji do utworzenia: {concurrent_count}")
     logger.info("=" * 60)
 
@@ -33,7 +40,7 @@ def main() -> None:
     # zwraca obiekt typu Proxy (AcquirerProxy), co powoduje błędy w IDE.
     file_lock = manager.Lock()
 
-    processes: List[Process] = []
+    processes: list[Process] = []
 
     try:
         for i in range(concurrent_count):

@@ -1,0 +1,30 @@
+﻿leonardo_auth_service\src\shared\browser_core\proxy\manager.py:10: error: Incompatible default for argument "username" (default has type "None", argument has type "str")  [assignment]
+leonardo_auth_service\src\shared\browser_core\proxy\manager.py:10: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+leonardo_auth_service\src\shared\browser_core\proxy\manager.py:10: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+leonardo_auth_service\src\shared\browser_core\proxy\manager.py:10: error: Incompatible default for argument "password" (default has type "None", argument has type "str")  [assignment]
+leonardo_auth_service\src\shared\browser_core\proxy\manager.py:10: error: Incompatible default for argument "bypass" (default has type "None", argument has type "str")  [assignment]
+leonardo_auth_service\src\shared\browser_core\proxy\manager.py:25: error: Incompatible default for argument "password" (default has type "None", argument has type "str")  [assignment]
+leonardo_auth_service\src\shared\browser_core\proxy\manager.py:25: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+leonardo_auth_service\src\shared\browser_core\proxy\manager.py:25: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+leonardo_auth_service\src\shared\browser_core\proxy\manager.py:36: error: Argument "username" to "ProxyConfig" has incompatible type "str | None"; expected "str"  [arg-type]
+leonardo_auth_service\src\shared\browser_core\factory.py:50: error: Incompatible types in assignment (expression has type "str | None", target has type "str")  [assignment]
+leonardo_auth_service\src\shared\browser_core\factory.py:61: error: Argument 2 to "launch" of "BrowserType" has incompatible type "**dict[str, object]"; expected "Path | str | None"  [arg-type]
+leonardo_auth_service\src\shared\browser_core\factory.py:61: error: Argument 2 to "launch" of "BrowserType" has incompatible type "**dict[str, object]"; expected "Sequence[str] | None"  [arg-type]
+leonardo_auth_service\src\shared\browser_core\factory.py:61: error: Argument 2 to "launch" of "BrowserType" has incompatible type "**dict[str, object]"; expected "bool | Sequence[str] | None"  [arg-type]
+leonardo_auth_service\src\shared\browser_core\factory.py:61: error: Argument 2 to "launch" of "BrowserType" has incompatible type "**dict[str, object]"; expected "bool | None"  [arg-type]
+leonardo_auth_service\src\shared\browser_core\factory.py:61: error: Argument 2 to "launch" of "BrowserType" has incompatible type "**dict[str, object]"; expected "float | None"  [arg-type]
+leonardo_auth_service\src\shared\browser_core\factory.py:61: error: Argument 2 to "launch" of "BrowserType" has incompatible type "**dict[str, object]"; expected "dict[str, str | float | bool] | None"  [arg-type]
+leonardo_auth_service\src\shared\browser_core\factory.py:61: error: Argument 2 to "launch" of "BrowserType" has incompatible type "**dict[str, object]"; expected "ProxySettings | None"  [arg-type]
+leonardo_auth_service\src\shared\browser_core\factory.py:64: error: Argument 1 to "launch" of "BrowserType" has incompatible type "**dict[str, object]"; expected "Path | str | None"  [arg-type]
+leonardo_auth_service\src\shared\browser_core\factory.py:64: error: Argument 1 to "launch" of "BrowserType" has incompatible type "**dict[str, object]"; expected "str | None"  [arg-type]
+leonardo_auth_service\src\shared\browser_core\factory.py:64: error: Argument 1 to "launch" of "BrowserType" has incompatible type "**dict[str, object]"; expected "Sequence[str] | None"  [arg-type]
+leonardo_auth_service\src\shared\browser_core\factory.py:64: error: Argument 1 to "launch" of "BrowserType" has incompatible type "**dict[str, object]"; expected "bool | Sequence[str] | None"  [arg-type]
+leonardo_auth_service\src\shared\browser_core\factory.py:64: error: Argument 1 to "launch" of "BrowserType" has incompatible type "**dict[str, object]"; expected "bool | None"  [arg-type]
+leonardo_auth_service\src\shared\browser_core\factory.py:64: error: Argument 1 to "launch" of "BrowserType" has incompatible type "**dict[str, object]"; expected "float | None"  [arg-type]
+leonardo_auth_service\src\shared\browser_core\factory.py:64: error: Argument 1 to "launch" of "BrowserType" has incompatible type "**dict[str, object]"; expected "dict[str, str | float | bool] | None"  [arg-type]
+leonardo_auth_service\src\shared\browser_core\factory.py:64: error: Argument 1 to "launch" of "BrowserType" has incompatible type "**dict[str, object]"; expected "ProxySettings | None"  [arg-type]
+leonardo_auth_service\src\shared\browser_core\factory.py:68: error: Incompatible default for argument "user_agent" (default has type "None", argument has type "str")  [assignment]
+leonardo_auth_service\src\shared\browser_core\factory.py:68: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+leonardo_auth_service\src\shared\browser_core\factory.py:68: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+Found 22 errors in 2 files (checked 1 source file)
+

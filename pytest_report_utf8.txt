@@ -1,0 +1,55 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.13.3, pytest-9.0.2, pluggy-1.6.0
+rootdir: C:\Users\user\PycharmProjects\Bot_mail_creator
+configfile: pyproject.toml
+testpaths: tests
+plugins: anyio-4.12.0, Faker-40.1.0, base-url-2.1.0, cov-7.0.0, mock-3.15.1, playwright-0.7.2, xdist-3.8.0
+collected 20 items
+
+tests/test_cookie_warmer.py::TestCookieWarmerUnit::test_human_delay_is_static PASSED [  5%]
+tests/test_cookie_warmer.py::TestCookieWarmerUnit::test_safe_wait_returns_true_when_visible PASSED [ 10%]
+tests/test_cookie_warmer.py::TestCookieWarmerUnit::test_safe_wait_returns_false_on_timeout PASSED [ 15%]
+tests/test_cookie_warmer.py::TestCookieWarmerUnit::test_simple_consent_click_tries_multiple_selectors PASSED [ 20%]
+tests/test_cookie_warmer.py::TestCookieWarmerScenarios::test_action_visit_onet_calls_goto 
+-------------------------------- live log call --------------------------------
+INFO     CookieWarmer:cookie_warmer.py:128 \U0001f36a [WARMER] -> Onet\nPASSED                                                                   [ 25%]
+tests/test_cookie_warmer.py::TestCookieWarmerScenarios::test_action_visit_wp_calls_goto 
+-------------------------------- live log call --------------------------------
+INFO     CookieWarmer:cookie_warmer.py:138 \U0001f36a [WARMER] -> WP\nPASSED                                                                   [ 30%]
+tests/test_identity.py::test_identity_structure PASSED                   [ 35%]
+tests/test_identity.py::test_check_duplicates_logic PASSED               [ 40%]
+tests/test_profiles.py::test_save_and_load_profile 
+-------------------------------- live log call --------------------------------
+INFO     ProfileManager:profile_manager.py:46 \U0001f4be [MANAGER] Dodano nowy profil do puli: 51d259e5-f97b-41aa-ac9c-04d054296a63\nINFO     ProfileManager:profile_manager.py:81 \U0001f4e4 [MANAGER] Pobrano profil: 51d259e5-f97b-41aa-ac9c-04d054296a63\nPASSED                                                                   [ 45%]
+tests/test_registration.py::TestRegistrationPageUnit::test_generate_login_variant_logic PASSED [ 50%]
+tests/test_registration.py::TestRegistrationPageUnit::test_ensure_unique_identity_success_first_try 
+-------------------------------- live log call --------------------------------
+INFO     src.registration_page:registration_page.py:323 \u2705 Available account found: test.user @ interia.pl\nPASSED                                                                   [ 55%]
+tests/test_registration.py::TestRegistrationPageUnit::test_ensure_unique_identity_retries 
+-------------------------------- live log call --------------------------------
+WARNING  src.registration_page:registration_page.py:330 \u26a0\ufe0f Login taken.login@interia.pl taken. Retrying...\nINFO     src.registration_page:registration_page.py:323 \u2705 Available account found: taken.login.2890 @ interia.pl\nPASSED                                                                   [ 60%]
+tests/test_smoke_e2e.py::test_interia_form_selectors_are_valid[chromium] 
+-------------------------------- live log call --------------------------------
+INFO     src.captcha_solver:captcha_solver.py:46 \U0001f527 Loaded 2 Gemini API keys.\nINFO     src.registration_page:registration_page.py:73 \U0001f504 Opening registration page...\nINFO     src.registration_page:registration_page.py:115 \u26a0\ufe0f Potential blockade detected.\nWARNING  src.registration_page:registration_page.py:123 \U0001f6a8 Passing frame to Solver...\nINFO     src.captcha_solver:captcha_solver.py:65 \U0001f916 Starting Captcha solving loop...\nINFO     src.captcha_solver:captcha_solver.py:93 \u2705 Captcha frame detached or hidden - assuming success.\nPASSED                                                                   [ 65%]
+tests/test_solver.py::test_solver_parses_json_correctly PASSED           [ 70%]
+tests/test_solver.py::test_find_captcha_target_found 
+-------------------------------- live log call --------------------------------
+INFO     src.captcha_solver:captcha_solver.py:46 \U0001f527 Loaded 1 Gemini API keys.\nPASSED                                                                   [ 75%]
+tests/test_solver.py::test_is_solved_or_detached_true 
+-------------------------------- live log call --------------------------------
+INFO     src.captcha_solver:captcha_solver.py:46 \U0001f527 Loaded 1 Gemini API keys.\nINFO     src.captcha_solver:captcha_solver.py:93 \u2705 Captcha frame detached or hidden - assuming success.\nPASSED                                                                   [ 80%]
+tests/test_storage.py::test_save_account_creates_file 
+-------------------------------- live log call --------------------------------
+INFO     GLOBAL:storage_manager.py:48 \U0001f4be [STORAGE] Zapisano konto: jan.kowalski@interia.pl\nPASSED                                                                   [ 85%]
+tests/test_utils.py::test_clean_polish_chars_basic PASSED                [ 90%]
+tests/test_utils.py::test_clean_polish_chars_mixed PASSED                [ 95%]
+tests/test_utils.py::test_clean_polish_chars_no_change PASSED            [100%]
+
+============================== warnings summary ===============================
+tests\test_smoke_e2e.py:9
+  C:\Users\user\PycharmProjects\Bot_mail_creator\tests\test_smoke_e2e.py:9: PytestUnknownMarkWarning: Unknown pytest.mark.slow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.slow
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================== 20 passed, 1 warning in 3.56s ========================
+

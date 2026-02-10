@@ -12,6 +12,7 @@ sys.path.append(str(ROOT_DIR))
 # np. żeby żaden test przypadkiem nie wysłał requestu do prawdziwego API, jeśli zapomnimy go zmockować
 
 import pytest
+
 from src.logger_config import get_logger
 
 logger = get_logger("TestRunner")
@@ -25,7 +26,7 @@ def pytest_runtest_makereport(item, call):
     # Check if test failed
     if rep.when == "call" and rep.failed:
         logger.error(f"❌ Test failed: {item.name}")
-        
+
         # Try to retrieve 'page' fixture from the test item
         page = item.funcargs.get("page")
         if page:

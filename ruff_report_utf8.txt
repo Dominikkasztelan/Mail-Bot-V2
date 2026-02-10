@@ -1,0 +1,451 @@
+﻿I001 [*] Import block is un-sorted or un-formatted
+ --> tests\conftest.py:2:1
+  |
+1 |   # tests/conftest.py
+2 | / import sys
+3 | | from pathlib import Path
+  | |________________________^
+  |
+help: Organize imports
+
+W292 [*] No newline at end of file
+  --> tests\conftest.py:13:103
+   |
+12 | # 2. Tutaj w przysz┼éo┼Ťci mo┼╝emy doda─ç globalne mocki
+13 | # np. ┼╝eby ┼╝aden test przypadkiem nie wys┼éa┼é requestu do prawdziwego API, je┼Ťli zapomnimy go zmockowa─ç
+   |                                                                                                       ^
+   |
+help: Add trailing newline
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> tests\test_cookie_warmer.py:6:1
+  |
+4 |   Tests warming scenarios and consent handling without live browser.
+5 |   """
+6 | / import pytest
+7 | | from unittest.mock import MagicMock, patch, PropertyMock
+  | |________________________________________________________^
+  |
+help: Organize imports
+
+F401 [*] `unittest.mock.PropertyMock` imported but unused
+ --> tests\test_cookie_warmer.py:7:45
+  |
+5 | """
+6 | import pytest
+7 | from unittest.mock import MagicMock, patch, PropertyMock
+  |                                             ^^^^^^^^^^^^
+  |
+help: Remove unused import: `unittest.mock.PropertyMock`
+
+PLC0415 `import` should be at the top-level of a file
+  --> tests\test_cookie_warmer.py:25:13
+   |
+23 |         """Creates a CookieWarmer instance with mocked page."""
+24 |         with patch("src.cookie_warmer.os.makedirs"):
+25 |             from src.cookie_warmer import CookieWarmer
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+26 |             return CookieWarmer(mock_page)
+   |
+
+PLC0415 `import` should be at the top-level of a file
+  --> tests\test_cookie_warmer.py:30:9
+   |
+28 |     def test_human_delay_is_static(self):
+29 |         """Test that _human_delay is a static method."""
+30 |         from src.cookie_warmer import CookieWarmer
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+31 |         # Should not raise - it's a static method
+32 |         CookieWarmer._human_delay(0.01, 0.02)
+   |
+
+PLC0415 `import` should be at the top-level of a file
+  --> tests\test_cookie_warmer.py:46:9
+   |
+44 |     def test_safe_wait_returns_false_on_timeout(self, warmer):
+45 |         """Test _safe_wait returns False when element times out."""
+46 |         from playwright.sync_api import TimeoutError as PlaywrightTimeout
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+47 |
+48 |         locator = MagicMock()
+   |
+
+PLC0415 `import` should be at the top-level of a file
+  --> tests\test_cookie_warmer.py:58:9
+   |
+56 |         """Test that _simple_consent_click iterates through selectors."""
+57 |         # Make all selectors invisible (timeout)
+58 |         from playwright.sync_api import TimeoutError as PlaywrightTimeout
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+59 |         mock_page.locator.return_value.first.wait_for.side_effect = PlaywrightTimeout("Not found")
+   |
+
+PLC0415 `import` should be at the top-level of a file
+  --> tests\test_cookie_warmer.py:85:13
+   |
+83 |         """Creates a CookieWarmer instance."""
+84 |         with patch("src.cookie_warmer.os.makedirs"):
+85 |             from src.cookie_warmer import CookieWarmer
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+86 |             return CookieWarmer(mock_page)
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> tests\test_identity.py:2:1
+  |
+1 |   # tests/test_identity.py
+2 | / from unittest.mock import patch, mock_open
+3 | | from src.identity_manager import IdentityManager
+  | |________________________________________________^
+  |
+help: Organize imports
+
+W292 [*] No newline at end of file
+  --> tests\test_identity.py:33:66
+   |
+31 |             assert mgr.check_duplicates("stary.login.123") is True
+32 |             # Tego nie ma -> False
+33 |             assert mgr.check_duplicates("nowy.unikalny") is False
+   |                                                                  ^
+   |
+help: Add trailing newline
+
+W292 [*] No newline at end of file
+  --> tests\test_profiles.py:31:55
+   |
+30 |     # Sprawdzamy czy plik trafi┼é do archiwum
+31 |     assert len(list(mgr.used_dir.glob("*.json"))) == 1
+   |                                                       ^
+   |
+help: Add trailing newline
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> tests\test_registration.py:2:1
+  |
+1 |   # tests/test_registration.py
+2 | / import pytest
+3 | | from unittest.mock import MagicMock, patch, call
+4 | | from src.registration_page import RegistrationPage
+5 | | from src.exceptions import RegistrationFailedError
+  | |__________________________________________________^
+6 |
+7 |   class TestRegistrationPageUnit:
+  |
+help: Organize imports
+
+F401 [*] `unittest.mock.call` imported but unused
+ --> tests\test_registration.py:3:45
+  |
+1 | # tests/test_registration.py
+2 | import pytest
+3 | from unittest.mock import MagicMock, patch, call
+  |                                             ^^^^
+4 | from src.registration_page import RegistrationPage
+5 | from src.exceptions import RegistrationFailedError
+  |
+help: Remove unused import: `unittest.mock.call`
+
+F401 [*] `src.exceptions.RegistrationFailedError` imported but unused
+ --> tests\test_registration.py:5:28
+  |
+3 | from unittest.mock import MagicMock, patch, call
+4 | from src.registration_page import RegistrationPage
+5 | from src.exceptions import RegistrationFailedError
+  |                            ^^^^^^^^^^^^^^^^^^^^^^^
+6 |
+7 | class TestRegistrationPageUnit:
+  |
+help: Remove unused import: `src.exceptions.RegistrationFailedError`
+
+N806 Variable `MockSolver` in function should be lowercase
+  --> tests\test_registration.py:18:62
+   |
+16 |     def reg_page(self, mock_page):
+17 |         # Prevent CaptchaSolver init from looking for keys or page issues
+18 |         with patch("src.registration_page.CaptchaSolver") as MockSolver:
+   |                                                              ^^^^^^^^^^
+19 |             return RegistrationPage(mock_page)
+   |
+
+F841 Local variable `MockSolver` is assigned to but never used
+  --> tests\test_registration.py:18:62
+   |
+16 |     def reg_page(self, mock_page):
+17 |         # Prevent CaptchaSolver init from looking for keys or page issues
+18 |         with patch("src.registration_page.CaptchaSolver") as MockSolver:
+   |                                                              ^^^^^^^^^^
+19 |             return RegistrationPage(mock_page)
+   |
+help: Remove assignment to unused variable `MockSolver`
+
+W293 [*] Blank line contains whitespace
+  --> tests\test_registration.py:24:1
+   |
+22 |         """Test the logic for generating login variants without side effects."""
+23 |         base = "jan.kowalski"
+24 |         
+   | ^^^^^^^^
+25 |         # Attempt 0 -> base if short enough
+26 |         variant_0 = reg_page._generate_login_variant(base, 0)
+   |
+help: Remove whitespace from blank line
+
+PLR2004 Magic value used in comparison, consider replacing `25` with a constant variable
+  --> tests\test_registration.py:32:36
+   |
+30 |         long_base = "a" * 25
+31 |         variant_long = reg_page._generate_login_variant(long_base, 0)
+32 |         assert len(variant_long) > 25
+   |                                    ^^
+33 |         assert "." in variant_long
+   |
+
+W293 [*] Blank line contains whitespace
+  --> tests\test_registration.py:47:1
+   |
+45 |         reg_page._check_availability = MagicMock(return_value=True)
+46 |         reg_page._select_domain = MagicMock(return_value=True)
+47 |         
+   | ^^^^^^^^
+48 |         identity = {"login": "test.user", "domain": "interia.pl"}
+   |
+help: Remove whitespace from blank line
+
+W293 [*] Blank line contains whitespace
+  --> tests\test_registration.py:49:1
+   |
+48 |         identity = {"login": "test.user", "domain": "interia.pl"}
+49 |         
+   | ^^^^^^^^
+50 |         reg_page._ensure_unique_identity(identity)
+   |
+help: Remove whitespace from blank line
+
+W293 [*] Blank line contains whitespace
+  --> tests\test_registration.py:51:1
+   |
+50 |         reg_page._ensure_unique_identity(identity)
+51 |         
+   | ^^^^^^^^
+52 |         # Verify
+53 |         reg_page._check_availability.assert_called()
+   |
+help: Remove whitespace from blank line
+
+W293 [*] Blank line contains whitespace
+  --> tests\test_registration.py:62:1
+   |
+60 |         reg_page._check_availability = MagicMock(side_effect=[False, True])
+61 |         reg_page._select_domain = MagicMock(return_value=True)
+62 |         
+   | ^^^^^^^^
+63 |         identity = {"login": "taken.login", "domain": "interia.pl"}
+   |
+help: Remove whitespace from blank line
+
+W293 [*] Blank line contains whitespace
+  --> tests\test_registration.py:64:1
+   |
+63 |         identity = {"login": "taken.login", "domain": "interia.pl"}
+64 |         
+   | ^^^^^^^^
+65 |         reg_page._ensure_unique_identity(identity)
+   |
+help: Remove whitespace from blank line
+
+W293 [*] Blank line contains whitespace
+  --> tests\test_registration.py:66:1
+   |
+65 |         reg_page._ensure_unique_identity(identity)
+66 |         
+   | ^^^^^^^^
+67 |         assert reg_page._check_availability.call_count == 2
+68 |         assert identity['login'] != "taken.login"  # Should have suffix
+   |
+help: Remove whitespace from blank line
+
+PLR2004 Magic value used in comparison, consider replacing `2` with a constant variable
+  --> tests\test_registration.py:67:59
+   |
+65 |         reg_page._ensure_unique_identity(identity)
+66 |         
+67 |         assert reg_page._check_availability.call_count == 2
+   |                                                           ^
+68 |         assert identity['login'] != "taken.login"  # Should have suffix
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> tests\test_smoke_e2e.py:2:1
+  |
+1 |   # tests/test_smoke_e2e.py
+2 | / import pytest
+3 | | from playwright.sync_api import Page, expect
+4 | | from src.registration_page import RegistrationPage
+  | |__________________________________________________^
+  |
+help: Organize imports
+
+W292 [*] No newline at end of file
+  --> tests\test_smoke_e2e.py:32:43
+   |
+31 |     # Je┼Ťli ten test przejdzie, to znaczy, ┼╝e Tw├│j RegistrationPage jest kompatybilny
+32 |     # z aktualn─ů wersj─ů strony Interia.pl.
+   |                                           ^
+   |
+help: Add trailing newline
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> tests\test_solver.py:2:1
+  |
+1 |   # tests/test_solver.py
+2 | / import pytest
+3 | | from unittest.mock import MagicMock, patch
+4 | | from src.captcha_solver import CaptchaSolver
+5 | | from playwright.sync_api import TimeoutError as PlaywrightTimeout
+  | |_________________________________________________________________^
+6 |
+7 |   # Fixture: Prepares a "fake" Client before each test
+  |
+help: Organize imports
+
+F401 [*] `playwright.sync_api.TimeoutError` imported but unused
+ --> tests\test_solver.py:5:49
+  |
+3 | from unittest.mock import MagicMock, patch
+4 | from src.captcha_solver import CaptchaSolver
+5 | from playwright.sync_api import TimeoutError as PlaywrightTimeout
+  |                                                 ^^^^^^^^^^^^^^^^^
+6 |
+7 | # Fixture: Prepares a "fake" Client before each test
+  |
+help: Remove unused import: `playwright.sync_api.TimeoutError`
+
+N806 Variable `MockClient` in function should be lowercase
+  --> tests\test_solver.py:10:54
+   |
+ 8 | @pytest.fixture
+ 9 | def mock_genai_client():
+10 |     with patch("src.captcha_solver.genai.Client") as MockClient:
+   |                                                      ^^^^^^^^^^
+11 |         yield MockClient
+   |
+
+W293 [*] Blank line contains whitespace
+  --> tests\test_solver.py:29:1
+   |
+27 |         solver.model_name = "gemini-1.5-flash"
+28 |         solver._get_client = MagicMock(return_value=mock_instance)
+29 |         
+   | ^^^^^^^^
+30 |         # Pass bytes instead of filename
+31 |         result = solver._solve_grid(b"fake_image_bytes", "instrukcja")
+   |
+help: Remove whitespace from blank line
+
+W293 [*] Blank line contains whitespace
+  --> tests\test_solver.py:41:1
+   |
+39 |     mock_locator.wait_for.return_value = None # success
+40 |     mock_frame.locator.return_value.first = mock_locator
+41 |     
+   | ^^^^
+42 |     with patch("src.captcha_solver.API_KEYS", {"GEMINI": ["key"]}):
+43 |         solver = CaptchaSolver(MagicMock())
+   |
+help: Remove whitespace from blank line
+
+W293 [*] Blank line contains whitespace
+  --> tests\test_solver.py:45:1
+   |
+43 |         solver = CaptchaSolver(MagicMock())
+44 |         result = solver._find_captcha_target(mock_frame)
+45 |     
+   | ^^^^
+46 |     assert result == mock_locator
+   |
+help: Remove whitespace from blank line
+
+W293 [*] Blank line contains whitespace
+  --> tests\test_solver.py:52:1
+   |
+50 |     mock_frame = MagicMock()
+51 |     mock_frame.is_detached.return_value = True
+52 |     
+   | ^^^^
+53 |     with patch("src.captcha_solver.API_KEYS", {"GEMINI": ["key"]}):
+54 |          solver = CaptchaSolver(MagicMock())
+   |
+help: Remove whitespace from blank line
+
+W292 [*] No newline at end of file
+  --> tests\test_solver.py:55:66
+   |
+53 |     with patch("src.captcha_solver.API_KEYS", {"GEMINI": ["key"]}):
+54 |          solver = CaptchaSolver(MagicMock())
+55 |          assert solver._is_solved_or_detached(mock_frame) is True
+   |                                                                  ^
+   |
+help: Add trailing newline
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> tests\test_storage.py:2:1
+  |
+1 |   # tests/test_storage.py
+2 | / import os
+3 | | from unittest.mock import patch, mock_open
+4 | | from src.storage_manager import StorageManager
+  | |______________________________________________^
+5 |
+6 |   def test_save_account_creates_file():
+  |
+help: Organize imports
+
+F401 [*] `os` imported but unused
+ --> tests\test_storage.py:2:8
+  |
+1 | # tests/test_storage.py
+2 | import os
+  |        ^^
+3 | from unittest.mock import patch, mock_open
+4 | from src.storage_manager import StorageManager
+  |
+help: Remove unused import: `os`
+
+W293 [*] Blank line contains whitespace
+  --> tests\test_storage.py:14:1
+   |
+12 |         "domain": "interia.pl"
+13 |     }
+14 |     
+   | ^^^^
+15 |     with patch("builtins.open", mock_open()) as mock_file:
+16 |         with patch("os.fsync"):
+   |
+help: Remove whitespace from blank line
+
+W293 [*] Blank line contains whitespace
+  --> tests\test_storage.py:19:1
+   |
+17 |             mgr = StorageManager("dummy.txt")
+18 |             mgr.save_account(identity)
+19 |             
+   | ^^^^^^^^^^^^
+20 |             mock_file.assert_called_with("dummy.txt", "a", encoding="utf-8")
+21 |             handle = mock_file()
+   |
+help: Remove whitespace from blank line
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> tests\test_utils.py:2:1
+  |
+1 | # tests/test_utils.py
+2 | from src.utils import clean_polish_chars
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+3 |
+4 | def test_clean_polish_chars_basic():
+  |
+help: Organize imports
+
+Found 41 errors.
+[*] 31 fixable with the `--fix` option (1 hidden fix can be enabled with the `--unsafe-fixes` option).
+

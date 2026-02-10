@@ -1,11 +1,13 @@
 # src/cookie_warmer.py
-import time
-import random
 import os
+import random
+import time
 from datetime import datetime
-from typing import Optional
 
-from playwright.sync_api import Page, Locator, TimeoutError as PlaywrightTimeout, Error as PlaywrightError
+from playwright.sync_api import Error as PlaywrightError
+from playwright.sync_api import Locator, Page
+from playwright.sync_api import TimeoutError as PlaywrightTimeout
+
 from src.logger_config import get_logger
 
 logger = get_logger("CookieWarmer")

@@ -1,7 +1,7 @@
 import asyncio
 import random
 
-from playwright.async_api import Locator, Page
+from patchright.async_api import Locator, Page
 
 
 class Humanizer:

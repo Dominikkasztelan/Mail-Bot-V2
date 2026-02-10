@@ -1,17 +1,25 @@
 # run_farmer.py
-import time
 import random
-from typing import Dict, Any, cast
+import sys
+import time
+from pathlib import Path
+
+# Add project root to sys.path
+ROOT_DIR = Path(__file__).parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
+from typing import Any, cast
 
 # ZEWNĘTRZNE
-from playwright.sync_api import sync_playwright, Page, BrowserContext, ViewportSize, Geolocation
+from playwright.sync_api import BrowserContext, Geolocation, Page, ViewportSize, sync_playwright
 from playwright_stealth import Stealth
 
 # LOKALNE
-from src.config import USER_AGENTS, VIEWPORTS, BROWSER_ARGS
+from src.config import BROWSER_ARGS, USER_AGENTS, VIEWPORTS
 from src.cookie_warmer import CookieWarmer
-from src.profile_manager import ProfileManager
 from src.logger_config import get_logger
+from src.profile_manager import ProfileManager
 
 logger = get_logger("Farmer")
 
@@ -78,7 +86,7 @@ def run_farmer_loop() -> None:
                 if is_warmed_successfully:
                     # FIX: Double Cast dla StorageState
                     raw_state = context.storage_state()
-                    cookies_json = cast(Dict[str, Any], cast(object, raw_state))
+                    cookies_json = cast(dict[str, Any], cast(object, raw_state))
 
                     manager.save_profile(
                         cookies=cookies_json,

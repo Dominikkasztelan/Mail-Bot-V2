@@ -9,8 +9,8 @@ from src.captcha_solver import CaptchaSolver
 # Fixture: Prepares a "fake" Client before each test
 @pytest.fixture
 def mock_genai_client():
-    with patch("src.captcha_solver.genai.Client") as MockClient:
-        yield MockClient
+    with patch("src.captcha_solver.genai.Client") as mock_client:
+        yield mock_client
 
 def test_solver_parses_json_correctly(mock_genai_client):
     """

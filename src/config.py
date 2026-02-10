@@ -1,5 +1,6 @@
 import os
 import platform
+
 from dotenv import load_dotenv
 
 # 1. Ładowanie zmiennych z pliku .env

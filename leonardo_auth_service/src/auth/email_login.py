@@ -1,12 +1,13 @@
 from typing import Any
 
 from loguru import logger
-from playwright.async_api import Page
+from patchright.async_api import Page
 from src.auth.base import AuthProvider
 from src.config.settings import settings
-from shared.browser.core.network.websocket_monitor import WebSocketMonitor
 from src.utils.cookie_warmer import CookieWarmer
 from src.utils.humanizer import Humanizer
+
+from shared.browser.core.network.websocket_monitor import WebSocketMonitor
 
 
 class EmailLoginStrategy(AuthProvider):

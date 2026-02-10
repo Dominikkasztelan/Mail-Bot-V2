@@ -10,25 +10,26 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from src.config import API_KEYS
 
+
 def test_google_generativeai():
     """Test with google-generativeai library."""
     print("\n" + "="*60)
     print("Testing google-generativeai SDK")
     print("="*60)
-    
+
     try:
-        import google.generativeai as genai
-        
+        import google.generativeai as genai  # noqa: PLC0415
+
         keys = API_KEYS.get("GEMINI", [])
         if not keys:
             print("❌ No API keys found")
             return False
-            
+
         key = keys[0]
         print(f"🔑 Using key: {key[:10]}...{key[-5:]}")
-        
+
         genai.configure(api_key=key)
-        
+
         # Try to list models
         print("\n📋 Attempting to list available models...")
         try:
@@ -41,7 +42,7 @@ def test_google_generativeai():
             return True
         except Exception as e:
             print(f"❌ Failed to list models: {e}")
-            
+
         # Try common model names
         model_names = [
             "gemini-pro",
@@ -51,7 +52,7 @@ def test_google_generativeai():
             "models/gemini-pro",
             "models/gemini-1.5-flash"
         ]
-        
+
         print("\n🔍 Testing common model names...")
         for model_name in model_names:
             try:
@@ -63,19 +64,19 @@ def test_google_generativeai():
             except Exception as e:
                 error_msg = str(e)
                 if "404" in error_msg:
-                    print(f"  ❌ 404 Not Found")
+                    print("  ❌ 404 Not Found")
                 elif "403" in error_msg:
-                    print(f"  ❌ 403 Forbidden (API key issue)")
+                    print("  ❌ 403 Forbidden (API key issue)")
                 else:
                     print(f"  ❌ {error_msg[:100]}")
-                    
+
     except ImportError:
         print("❌ google-generativeai not installed")
         return False
     except Exception as e:
         print(f"❌ Unexpected error: {e}")
         return False
-    
+
     return False
 
 def test_google_genai():
@@ -83,21 +84,21 @@ def test_google_genai():
     print("\n" + "="*60)
     print("Testing google-genai SDK")
     print("="*60)
-    
+
     try:
-        from google import genai
-        from google.genai import types
-        
+        from google import genai  # noqa: PLC0415, F401
+        from google.genai import types  # noqa: PLC0415, F401
+
         keys = API_KEYS.get("GEMINI", [])
         if not keys:
             print("❌ No API keys found")
             return False
-            
+
         key = keys[0]
         print(f"🔑 Using key: {key[:10]}...{key[-5:]}")
-        
+
         client = genai.Client(api_key=key)
-        
+
         # Try common model names
         model_names = [
             "gemini-2.0-flash-exp",
@@ -105,7 +106,7 @@ def test_google_genai():
             "gemini-1.5-pro",
             "gemini-pro",
         ]
-        
+
         print("\n🔍 Testing model names...")
         for model_name in model_names:
             try:
@@ -119,19 +120,19 @@ def test_google_genai():
             except Exception as e:
                 error_msg = str(e)
                 if "404" in error_msg or "NOT_FOUND" in error_msg:
-                    print(f"  ❌ 404 Not Found")
+                    print("  ❌ 404 Not Found")
                 elif "403" in error_msg or "PERMISSION" in error_msg:
-                    print(f"  ❌ 403 Permission Denied")
+                    print("  ❌ 403 Permission Denied")
                 else:
                     print(f"  ❌ {error_msg[:100]}")
-                    
+
     except ImportError:
         print("❌ google-genai not installed")
         return False
     except Exception as e:
         print(f"❌ Unexpected error: {e}")
         return False
-    
+
     return False
 
 def check_api_key_validity():
@@ -139,10 +140,10 @@ def check_api_key_validity():
     print("\n" + "="*60)
     print("API Key Validation")
     print("="*60)
-    
+
     keys = API_KEYS.get("GEMINI", [])
     print(f"Found {len(keys)} API key(s)")
-    
+
     for i, key in enumerate(keys, 1):
         print(f"\nKey {i}:")
         print(f"  Length: {len(key)} chars")
@@ -153,13 +154,13 @@ def check_api_key_validity():
 def main():
     print("🔍 Gemini API Diagnostics")
     print("="*60)
-    
+
     check_api_key_validity()
-    
+
     # Test both SDKs
     success1 = test_google_generativeai()
     success2 = test_google_genai()
-    
+
     print("\n" + "="*60)
     print("SUMMARY")
     print("="*60)

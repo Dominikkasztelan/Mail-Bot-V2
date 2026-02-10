@@ -1,0 +1,49 @@
+--- TEST START ---
+PAGE LOG: [STEALTH DEBUG] MINIMAL INIT SCRIPT RUNNING
+PAGE LOG: MAIN WINDOW: {
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+  "appVersion": "5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+  "platform": "Win32",
+  "languages": [
+    "pl-PL",
+    "pl",
+    "en-US",
+    "en"
+  ],
+  "language": "pl-PL",
+  "vendor": "Google Inc.",
+  "hardwareConcurrency": 16,
+  "deviceMemory": 8,
+  "webdriver": false
+}
+PAGE LOG: WORKER: {
+  "type": "STEALTH_INIT_SUCCESS"
+}
+PAGE LOG: MISMATCH [userAgent]: Main="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36", Worker=undefined
+PAGE LOG: MISMATCH [appVersion]: Main="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36", Worker=undefined
+PAGE LOG: MISMATCH [platform]: Main="Win32", Worker=undefined
+PAGE LOG: MISMATCH [languages]: Main=["pl-PL","pl","en-US","en"], Worker=undefined
+PAGE LOG: MISMATCH [language]: Main="pl-PL", Worker=undefined
+PAGE LOG: MISMATCH [vendor]: Main="Google Inc.", Worker=undefined
+PAGE LOG: MISMATCH [hardwareConcurrency]: Main=16, Worker=undefined
+PAGE LOG: MISMATCH [deviceMemory]: Main=8, Worker=undefined
+PAGE LOG: MISMATCH [webdriver]: Main=false, Worker=undefined
+PAGE LOG: ❌ INCONSISTENT!
+PAGE LOG: WORKER: {
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+  "appVersion": "5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+  "platform": "Win32",
+  "languages": [
+    "pl-PL",
+    "pl",
+    "en-US",
+    "en"
+  ],
+  "language": "pl-PL",
+  "vendor": "Google Inc.",
+  "hardwareConcurrency": 16,
+  "deviceMemory": 8,
+  "webdriver": false
+}
+PAGE LOG: ✅ CONSISTENT!
+✅ Worker consistency PASSED!

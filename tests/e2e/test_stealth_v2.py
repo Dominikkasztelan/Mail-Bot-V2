@@ -1,10 +1,11 @@
 import asyncio
-import sys
 import os
 import shutil
+import sys
 import tempfile
 import traceback
 from pathlib import Path
+
 from loguru import logger
 
 logger.remove()
@@ -15,18 +16,20 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 async def test():
-    from patchright.async_api import async_playwright
-    
+    from patchright.async_api import async_playwright  # noqa: PLC0415
+
+    from shared.browser.core.stealth.injector import StealthConfig, StealthInjector
+
     # Fresh profile dir every time
-    user_data_dir = os.path.join(tempfile.gettempdir(), "patchright_test_profile_v2")
+    user_data_dir = os.path.join(tempfile.gettempdir(), "patchright_stealth_v2")
     if os.path.exists(user_data_dir):
         shutil.rmtree(user_data_dir, ignore_errors=True)
     os.makedirs(user_data_dir, exist_ok=True)
-    
-    logger.info(f"🎬 Launching persistent context...")
-    
+
+    logger.info("🎬 Launching persistent context...")
+
     pw = await async_playwright().start()
-    
+
     try:
         context = await pw.chromium.launch_persistent_context(
             user_data_dir=user_data_dir,
@@ -43,9 +46,20 @@ async def test():
             ignore_default_args=["--enable-automation"],
         )
         logger.info("✅ Persistent context launched!")
-        
+
+        # APPLY STEALTH
+        # Enable mask_navigator ONLY first (or all if confident)
+        stealth = StealthInjector(StealthConfig(
+            mask_navigator=True,
+            spoof_webgl=True,
+            canvas_noise=True,
+            audio_noise=True
+        ))
+        await stealth.apply_stealth(context)
+        logger.info("✅ Stealth applied (ALL) using CDP injection!")
+
         page = context.pages[0] if context.pages else await context.new_page()
-        
+
         # Try Google first to test DNS
         logger.info("Testing DNS with google.com...")
         try:
@@ -54,15 +68,15 @@ async def test():
         except Exception as e:
             logger.error(f"❌ Google failed: {e}")
             logger.info("Trying direct IP navigation...")
-        
+
         # Now try the bot detection page
         logger.info("Navigating to bot detection page...")
         await page.goto("https://deviceandbrowserinfo.com/are_you_a_bot", wait_until="domcontentloaded", timeout=30000)
         logger.info("✅ Bot detection page loaded!")
         logger.info("⏳ Keeping open for 600 seconds...")
-        
+
         await asyncio.sleep(600)
-        
+
     except Exception as e:
         logger.error(f"❌ Error: {e}")
         logger.error(traceback.format_exc())

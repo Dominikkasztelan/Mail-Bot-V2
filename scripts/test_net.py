@@ -3,6 +3,7 @@
 Network connectivity test for Google Gemini API.
 """
 import time
+import sys
 
 from src.logger_config import get_logger
 
@@ -12,7 +13,7 @@ try:
     import requests
 except ImportError:
     logger.error("❌ Module 'requests' not installed. Run: pip install requests")
-    exit(1)
+    sys.exit(1)
 
 
 def test_gemini_connection() -> None:

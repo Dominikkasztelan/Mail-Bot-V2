@@ -1,16 +1,17 @@
 # src/storage_manager.py
 import datetime
 import os
-from typing import Optional, Any
-from src.models import UserIdentity
+from typing import Any
+
 from src.logger_config import logger
+from src.models import UserIdentity
 
 
 class StorageManager:
     def __init__(self, filepath: str = "saved_accounts/konta.txt"):
         self.filepath = filepath
 
-    def save_account(self, identity: UserIdentity, lock: Optional[Any] = None) -> None:
+    def save_account(self, identity: UserIdentity, lock: Any | None = None) -> None:
         """
         Zapisuje utworzone konto do pliku tekstowego (format: email | hasło | dane | data).
         Obsługuje dynamiczne domeny (interia.pl, interia.eu, poczta.fm) przekazane z RegistrationPage.

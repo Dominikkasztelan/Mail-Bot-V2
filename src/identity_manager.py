@@ -1,8 +1,10 @@
 # src/identity_manager.py
 import os
 import random
-from typing import Optional, Any
+from typing import Any
+
 from faker import Faker
+
 from src.config import GENERATOR_CONFIG, POLISH_MONTHS, RETRY_LIMITS
 from src.models import UserIdentity
 from src.utils import clean_polish_chars
@@ -13,7 +15,7 @@ class IdentityManager:
         self.db_path = db_path
         self.fake = Faker(GENERATOR_CONFIG["LOCALE"])
 
-    def check_duplicates(self, login: str, lock: Optional[Any] = None) -> bool:
+    def check_duplicates(self, login: str, lock: Any | None = None) -> bool:
         """
         Sprawdza czy dany login już istnieje w pliku bazy danych.
         Ignoruje domenę przy sprawdzaniu (sprawdza tylko prefix).
@@ -23,7 +25,7 @@ class IdentityManager:
         try:
             if lock: lock.acquire()
             try:
-                with open(self.db_path, "r", encoding="utf-8") as f:
+                with open(self.db_path, encoding="utf-8") as f:
                     for line in f:
                         # Sprawdzamy czy login występuje w linii (proste i skuteczne)
                         if f"{login}@" in line:
@@ -34,7 +36,7 @@ class IdentityManager:
             pass
         return False
 
-    def generate(self, lock: Optional[Any] = None) -> UserIdentity:
+    def generate(self, lock: Any | None = None) -> UserIdentity:
         """
         Generuje nową, unikalną tożsamość użytkownika.
         Zwraca obiekt zgodny ze strukturą UserIdentity.

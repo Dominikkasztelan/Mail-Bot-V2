@@ -2,6 +2,7 @@ from typing import Any
 
 from loguru import logger
 from patchright.async_api import Browser, BrowserContext, Playwright, async_playwright
+
 from shared.browser.core.stealth.injector import StealthConfig, StealthInjector
 from shared.network.proxy_provider import ProxyProvider
 
@@ -30,11 +31,11 @@ class BrowserCore:
 
         # Fix for Windows: Use SelectorEventLoop instead of ProactorEventLoop
         # to support subprocess operations required by Playwright
-        import sys
-        import asyncio
+        import asyncio  # noqa: PLC0415
+        import sys  # noqa: PLC0415
         if sys.platform == "win32":
             try:
-                from asyncio import WindowsSelectorEventLoopPolicy
+                from asyncio import WindowsSelectorEventLoopPolicy  # noqa: PLC0415
                 if not isinstance(asyncio.get_event_loop_policy(), WindowsSelectorEventLoopPolicy):
                     asyncio.set_event_loop_policy(WindowsSelectorEventLoopPolicy())
                     logger.debug("Applied WindowsSelectorEventLoopPolicy for Playwright compatibility.")
@@ -72,7 +73,7 @@ class BrowserCore:
         args.append("--disable-extensions")
 
         launch_options: dict[str, Any] = {
-            "headless": self.headless, 
+            "headless": self.headless,
             "channel": "chrome",
             "args": args,
             "ignore_default_args": ["--enable-automation"]
@@ -99,9 +100,12 @@ class BrowserCore:
         # Mypy assertion
         assert self._browser is not None
 
+        # Use UA from config if not provided
+        ua = user_agent or self.stealth_config.user_agent
+
         context = await self._browser.new_context(
             storage_state=storage_state,
-            user_agent=user_agent or "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+            user_agent=ua,
             viewport={"width": 1920, "height": 1080},
             locale="pl-PL",
             timezone_id="Europe/Warsaw",  # Should match proxy in prod
@@ -119,7 +123,7 @@ class BrowserCore:
             except Exception:
                 pass
             self._browser = None
-            
+
         if self._playwright:
             try:
                 await self._playwright.stop()
@@ -128,5 +132,5 @@ class BrowserCore:
                 if "closed pipe" not in str(e).lower():
                     logger.debug(f"Non-critical shutdown error: {e}")
             self._playwright = None
-            
+
         logger.info("🛑 Browser Core stopped.")

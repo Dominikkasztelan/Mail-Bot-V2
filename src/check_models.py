@@ -2,7 +2,8 @@
 import os
 import sys
 from pathlib import Path
-from typing import Optional, Any
+from typing import Any
+
 from dotenv import load_dotenv
 from google import genai
 
@@ -27,7 +28,7 @@ def list_gemini_models() -> None:
     Connects to Google GenAI and lists available models.
     """
     load_dotenv()
-    api_key: Optional[str] = os.getenv("GEMINI_API_KEY")
+    api_key: str | None = os.getenv("GEMINI_API_KEY")
 
     if not api_key:
         logger.critical("❌ CRITICAL: 'GEMINI_API_KEY' not found in .env!")

@@ -1,5 +1,6 @@
 from typing import TypedDict
 
+
 class UserIdentity(TypedDict):
     """
     Definicja struktury danych tożsamości.

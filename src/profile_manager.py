@@ -1,9 +1,8 @@
-import os
-import uuid
 import json
+import os
 import time
+import uuid
 from pathlib import Path
-from typing import Optional, Dict
 
 from src.logger_config import get_logger
 
@@ -21,7 +20,7 @@ class ProfileManager:
         for d in [self.ready_dir, self.used_dir, self.tmp_dir]:
             d.mkdir(parents=True, exist_ok=True)
 
-    def save_profile(self, cookies: Dict, metadata: Optional[Dict] = None) -> None:
+    def save_profile(self, cookies: dict, metadata: dict | None = None) -> None:
         """
         Zapisuje wygrzany profil. Używa katalogu tmp, aby zapis był atomowy.
         """
@@ -49,7 +48,7 @@ class ProfileManager:
             if tmp_path.exists():
                 os.remove(tmp_path)
 
-    def get_fresh_profile(self) -> Optional[Dict]:
+    def get_fresh_profile(self) -> dict | None:
         """
         Pobiera najstarszy dostępny profil i przenosi go do archiwum.
         Zwraca dane profilu lub None, jeśli kolejka jest pusta.
@@ -72,7 +71,7 @@ class ProfileManager:
 
             # Teraz mamy plik na wyłączność. Czytamy i przenosimy do archive.
             try:
-                with open(locked_path, "r", encoding="utf-8") as f:
+                with open(locked_path, encoding="utf-8") as f:
                     data = json.load(f)
 
                 archive_path = self.used_dir / file_path.name

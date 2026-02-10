@@ -1,4 +1,5 @@
 import pytest
+
 from shared.browser.core.factory import BrowserCore
 from shared.browser.core.stealth.injector import StealthConfig
 

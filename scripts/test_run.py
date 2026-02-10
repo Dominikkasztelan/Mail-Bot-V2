@@ -1,21 +1,23 @@
 # test_run.py
+import os
 import random
 import time
-import os
-from typing import Any, Dict, cast, Optional
+from typing import Any, cast
 
 # FIX: Import 'Error as PlaywrightError' dla zgodności z PEP 8 (unikanie broad exception)
-from playwright.sync_api import sync_playwright, Page, BrowserContext, ViewportSize, Geolocation, Error as PlaywrightError
+from playwright.sync_api import BrowserContext, Geolocation, Page, ViewportSize, sync_playwright
+from playwright.sync_api import Error as PlaywrightError
 from playwright_stealth import Stealth
+
+from src.config import BROWSER_ARGS, USER_AGENTS
+from src.exceptions import CaptchaBlockadeError, CaptchaSolveError, RegistrationFailedError
+from src.identity_manager import IdentityManager
+from src.logger_config import logger
+from src.profile_manager import ProfileManager
 
 # Importy lokalne
 from src.registration_page import RegistrationPage
-from src.config import USER_AGENTS, BROWSER_ARGS
-from src.profile_manager import ProfileManager
-from src.identity_manager import IdentityManager
 from src.storage_manager import StorageManager
-from src.logger_config import logger
-from src.exceptions import CaptchaSolveError, RegistrationFailedError, CaptchaBlockadeError
 
 
 def run_worker(instance_id: int, file_lock: Any) -> None:
@@ -27,8 +29,8 @@ def run_worker(instance_id: int, file_lock: Any) -> None:
     storage_mgr = StorageManager()
 
     # 1. POBRANIE PROFILU
-    profile_data: Optional[Dict[str, Any]] = None
-    for i in range(10):
+    profile_data: dict[str, Any] | None = None
+    for _ in range(10):
         profile_data = profile_mgr.get_fresh_profile()
         if profile_data:
             break
@@ -50,7 +52,7 @@ def run_worker(instance_id: int, file_lock: Any) -> None:
     geo_data: Geolocation = {"latitude": 52.2297, "longitude": 21.0122}
 
     raw_cookies = profile_data.get("cookies")
-    cookies_data = cast(Dict[str, Any], cast(object, raw_cookies))
+    cookies_data = cast(dict[str, Any], cast(object, raw_cookies))
 
     is_headless = os.getenv("HEADLESS", "False").lower() == "true"
 
@@ -83,7 +85,7 @@ def run_worker(instance_id: int, file_lock: Any) -> None:
 
             # FIX: Double Cast (UserIdentity -> object -> Dict[str, Any])
             # Eliminuje błąd lintera: "Cast of type UserIdentity may be a mistake"
-            bot.fill_form(cast(Dict[str, Any], cast(object, identity)))
+            bot.fill_form(cast(dict[str, Any], cast(object, identity)))
 
             bot.accept_terms()
             bot.submit()

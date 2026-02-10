@@ -1,15 +1,19 @@
 # src/registration_page.py
+import os
+import random
 import re
 import time
-import random
-import os
-from typing import Callable, Any, Dict, List, Optional
-from playwright.sync_api import Page, Locator, Frame, TimeoutError as PlaywrightTimeout, Error as PlaywrightError
+from collections.abc import Callable
+from typing import Any
+
+from playwright.sync_api import Error as PlaywrightError
+from playwright.sync_api import Frame, Locator, Page
+from playwright.sync_api import TimeoutError as PlaywrightTimeout
 
 from src.captcha_solver import CaptchaSolver
-from src.config import DELAYS, RETRY_LIMITS, REGISTRATION_URL
+from src.config import DELAYS, REGISTRATION_URL, RETRY_LIMITS
+from src.exceptions import CaptchaBlockadeError, ElementNotFoundError, RegistrationFailedError
 from src.logger_config import get_logger
-from src.exceptions import ElementNotFoundError, RegistrationFailedError, CaptchaBlockadeError
 
 logger = get_logger(__name__)
 
@@ -118,9 +122,9 @@ class RegistrationPage:
             self._handle_blockade_ui()
 
         target_frame = self._find_target_frame()
-        
+
         if target_frame:
-            logger.warning(f"🚨 Passing frame to Solver...")
+            logger.warning("🚨 Passing frame to Solver...")
             if self.solver.solve_loop(target_frame):
                 return True
             else:
@@ -138,7 +142,7 @@ class RegistrationPage:
     def _is_blockade_ui_visible(self) -> bool:
         return self.verify_text.is_visible() or self.verify_btn.is_visible()
 
-    def _get_captcha_frames(self) -> List[Frame]:
+    def _get_captcha_frames(self) -> list[Frame]:
         return [f for f in self.page.frames if "recaptcha" in f.url or "captcha" in f.url]
 
     def _handle_blockade_ui(self) -> None:
@@ -151,7 +155,7 @@ class RegistrationPage:
         except (PlaywrightError, PlaywrightTimeout):
             pass
 
-    def _find_target_frame(self) -> Optional[Frame]:
+    def _find_target_frame(self) -> Frame | None:
         # Try to find frame with payload
         for attempt in range(5):
             all_frames = self.page.frames
@@ -171,16 +175,16 @@ class RegistrationPage:
                         break
                 except (PlaywrightError, PlaywrightTimeout):
                     pass
-            
+
             if target_frame:
                 return target_frame
 
             self._attempt_checkbox_click(all_frames)
             self.page.wait_for_timeout(1000)
-        
+
         return None
 
-    def _attempt_checkbox_click(self, frames: List[Frame]) -> None:
+    def _attempt_checkbox_click(self, frames: list[Frame]) -> None:
         for frame in frames:
             if frame.is_detached(): continue
             cb = frame.locator("#recaptcha-anchor").first
@@ -195,7 +199,7 @@ class RegistrationPage:
         """Removes obstacles (RODO, Captcha)."""
         # Small delay to allow RODO banner to fully render/animate
         self.page.wait_for_timeout(2000)
-        
+
         for btn in [self.rodo_btn_primary, self.rodo_btn_secondary, self.rodo_btn_accept_all]:
             if btn.is_visible():
                 try:
@@ -224,7 +228,7 @@ class RegistrationPage:
                     raise ElementNotFoundError(f"Failed: {action_name}") from e
                 self.page.wait_for_timeout(1000)
 
-    def fill_form(self, identity: Dict[str, Any]) -> None:
+    def fill_form(self, identity: dict[str, Any]) -> None:
         logger.info(f"📝 Filling form: {identity['first_name']} {identity['last_name']}")
 
         self.retry_action("FirstName", lambda: self.human_type(self.input_name, identity['first_name']))
@@ -295,28 +299,28 @@ class RegistrationPage:
         """Checks if login or domain fields show error."""
         if self.page.locator(".input-error-message").is_visible():
             return False
-        
+
         # Sometimes there are multiple error divs
         if self.page.locator("div.account-identity .input-error-message").count() > 0:
             return False
 
         return True
 
-    def _ensure_unique_identity(self, identity: Dict[str, Any]) -> None:
+    def _ensure_unique_identity(self, identity: dict[str, Any]) -> None:
         """Generates a unique login using retries."""
         self.input_login.wait_for(state="visible", timeout=10000)
         base_login = identity['login']
-        
+
         # Normalize base login
         if '.' in base_login and len(base_login) > 5:
              # Assume 'name.surname' structure
              parts = base_login.split('.')
              base_login = f"{parts[0]}.{parts[1]}"
-        
+
         attempts_limit = RETRY_LIMITS.get("LOGIN_ATTEMPTS", 10)
         for attempt in range(attempts_limit):
             current_login = self._generate_login_variant(base_login, attempt)
-            
+
             self._fill_login_field(current_login)
             self.page.wait_for_timeout(1000)
 
@@ -328,7 +332,7 @@ class RegistrationPage:
                     identity['login'] = current_login
                     identity['domain'] = self.DEFAULT_DOMAIN
                     return
-            
+
             # Simple backoff/retry
             logger.warning(f"⚠️ Login {current_login}@{self.DEFAULT_DOMAIN} taken. Retrying...")
 
@@ -336,10 +340,10 @@ class RegistrationPage:
 
     def _generate_login_variant(self, base_login: str, attempt: int) -> str:
         if attempt == 0:
-            if len(base_login) > 20: 
+            if len(base_login) > 20:
                  return f"{base_login}.{random.randint(100, 999)}"
             return base_login
-        
+
         suffix = str(random.randint(100, 9999))
         return f"{base_login}.{suffix}"[:30]
 

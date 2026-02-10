@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
-from playwright.async_api import Page
+from patchright.async_api import Page
 
 
 class AuthProvider(ABC):

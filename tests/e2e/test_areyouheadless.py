@@ -1,6 +1,7 @@
 import asyncio
 import sys
 from pathlib import Path
+
 from loguru import logger
 
 # Add root to sys.path
@@ -11,9 +12,10 @@ if str(ROOT_DIR) not in sys.path:
 from shared.browser.core.factory import BrowserCore
 from shared.browser.core.stealth.injector import StealthConfig
 
-async def open_headed_test():
-    logger.info("🎬 Opening Sannysoft in HEADED mode...")
-    
+
+async def test_areyouheadless():
+    logger.info("🎬 Opening Are You Headless detection test...")
+
     # Use full stealth config
     stealth = StealthConfig(
         spoof_webgl=True,
@@ -21,25 +23,26 @@ async def open_headed_test():
         canvas_noise=True,
         audio_noise=True
     )
-    
+
     # Launch in HEADED mode
     browser = BrowserCore(headless=False, stealth_config=stealth)
-    
+
     try:
         await browser.start()
         context = await browser.create_context()
         page = await context.new_page()
-        
-        url = "https://bot.sannysoft.com/"
+
+        url = "https://arh.antoinevastel.com/bots/areyouheadless"
         logger.info(f"🌐 Navigating to {url}...")
         await page.goto(url)
-        
-        logger.info("👀 Browser is open. You can now inspect the results.")
-        logger.info("⏳ Script will keep the browser open for 1000 seconds (or until you terminate it).")
-        
-        # Keep it open for 1000 seconds (~16.5 minutes)
+
+        logger.info("👀 Are You Headless loaded. Check the results.")
+        logger.info("⏳ Browser will stay open for 1000 seconds (or until you terminate it).")
+        logger.info("💡 This test checks for headless Chrome detection.")
+
+        # Keep it open for a long time
         await asyncio.sleep(1000)
-        
+
     except Exception as e:
         logger.error(f"❌ Error: {e}")
     finally:
@@ -47,4 +50,4 @@ async def open_headed_test():
         logger.info("👋 Browser closed.")
 
 if __name__ == "__main__":
-    asyncio.run(open_headed_test())
+    asyncio.run(test_areyouheadless())

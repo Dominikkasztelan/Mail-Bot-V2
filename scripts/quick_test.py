@@ -1,14 +1,17 @@
-import os, sys
+import os
+import sys
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from src.config import API_KEYS
 import google.generativeai as genai
+
+from src.config import API_KEYS
 
 key = API_KEYS["GEMINI"][0]
 genai.configure(api_key=key)
 
 models_to_test = [
     "gemini-pro",
-    "gemini-1.5-pro", 
+    "gemini-1.5-pro",
     "gemini-1.5-flash",
     "gemini-1.5-flash-latest",
     "models/gemini-pro",

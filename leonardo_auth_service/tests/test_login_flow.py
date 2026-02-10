@@ -6,7 +6,7 @@ from src.core.browser import browser_factory
 @pytest.mark.asyncio
 async def test_leonardo_login_flow_visual() -> None:
     from src.auth.email_login import EmailLoginStrategy
-    
+
     print("\n[STEP 1] Initializing Browser Factory...")
     await browser_factory.start()
 

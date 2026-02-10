@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Debug Worker Consistency</title>
+</head>
+<body>
+<h1>Debug Worker Consistency</h1>
+<pre id="output"></pre>
+<script>
+    const output = document.getElementById('output');
+    function log(msg) {
+        output.textContent += msg + '\n';
+        console.log(msg);
+    }
+
+    const mainProps = {
+        userAgent: navigator.userAgent,
+        appVersion: navigator.appVersion,
+        platform: navigator.platform,
+        languages: navigator.languages,
+        language: navigator.language,
+        vendor: navigator.vendor,
+        hardwareConcurrency: navigator.hardwareConcurrency,
+        deviceMemory: navigator.deviceMemory,
+        webdriver: navigator.webdriver
+    };
+
+    log('MAIN WINDOW: ' + JSON.stringify(mainProps, null, 2));
+
+    const workerCode = `
+        self.onmessage = function(e) {
+            const workerProps = {
+                userAgent: navigator.userAgent,
+                appVersion: navigator.appVersion,
+                platform: navigator.platform,
+                languages: navigator.languages,
+                language: navigator.language,
+                vendor: navigator.vendor,
+                hardwareConcurrency: navigator.hardwareConcurrency,
+                deviceMemory: navigator.deviceMemory,
+                webdriver: navigator.webdriver
+            };
+            self.postMessage(workerProps);
+        };
+    `;
+
+    const blob = new Blob([workerCode], {type: 'application/javascript'});
+    const worker = new Worker(URL.createObjectURL(blob));
+
+    worker.onmessage = function(e) {
+        const workerProps = e.data;
+        log('WORKER: ' + JSON.stringify(workerProps, null, 2));
+        
+        // Compare
+        const keys = Object.keys(mainProps);
+        let consistent = true;
+        keys.forEach(key => {
+            const mainVal = JSON.stringify(mainProps[key]);
+            const workerVal = JSON.stringify(workerProps[key]);
+            if (mainVal !== workerVal) {
+                log(`MISMATCH [${key}]: Main=${mainVal}, Worker=${workerVal}`);
+                consistent = false;
+            }
+        });
+        
+        if (consistent) {
+            log('✅ CONSISTENT!');
+            window.isConsistent = true;
+        } else {
+            log('❌ INCONSISTENT!');
+            window.isConsistent = false;
+        }
+    };
+    worker.postMessage('start');
+</script>
+</body>
+</html>

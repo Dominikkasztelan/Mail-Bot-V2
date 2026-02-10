@@ -4,7 +4,7 @@ Leonardo-specific browser configuration and factory.
 This module wraps the shared BrowserCore for the Leonardo authentication service.
 """
 
-from playwright.async_api import Browser, BrowserContext
+from patchright.async_api import Browser, BrowserContext
 from src.config.settings import settings
 
 from shared.browser.core.factory import BrowserCore

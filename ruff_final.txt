@@ -1,0 +1,7 @@
+﻿leonardo_auth_service\tests\test_login_flow.py:8:5: PLC0415 `import` should be at the top-level of a file
+tests\e2e\test_stealth_v2.py:21:5: PLC0415 `import` should be at the top-level of a file
+tests\e2e\test_worker_fix.py:19:5: PLC0415 `import` should be at the top-level of a file
+tests\e2e\test_worker_fix.py:21:5: PLC0415 `import` should be at the top-level of a file
+tests\e2e\test_worker_fix.py:40:121: E501 Line too long (137 > 120)
+tests\e2e\test_worker_fix.py:70:121: E501 Line too long (123 > 120)
+Found 6 errors.

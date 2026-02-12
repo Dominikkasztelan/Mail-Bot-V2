@@ -22,7 +22,8 @@ class EmailLoginStrategy(AuthProvider):
         if not email or not password:
             raise ValueError("Email and password are required for Email Login.")
 
-        # Mypy aid: Assert they are strings (since we checked truthiness, but mypy might need explicit cast if Dict is str, Any)
+        # Mypy aid: Assert they are strings (since we checked truthiness,
+        # but mypy might need explicit cast if Dict is str, Any)
         assert isinstance(email, str)
         assert isinstance(password, str)
 

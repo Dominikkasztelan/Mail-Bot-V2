@@ -120,7 +120,7 @@ async def login(request: LoginRequest) -> LoginResponse:
 
     except Exception as e:
         logger.exception("❌ Login process failed")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
     finally:
         # Cleanup context (closes page)

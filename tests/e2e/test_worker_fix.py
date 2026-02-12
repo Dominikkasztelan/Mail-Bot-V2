@@ -37,7 +37,10 @@ async def test():
             channel="chrome",
             viewport={"width": 1920, "height": 1080},
             locale="pl-PL",
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+            user_agent=(
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+            ),
             args=[
                 "--disable-blink-features=AutomationControlled",
                 "--no-first-run",
@@ -67,7 +70,11 @@ async def test():
         # Now try bot detection page
         logger.info("🌐 Navigating to bot detection page...")
         try:
-            await page.goto("https://deviceandbrowserinfo.com/are_you_a_bot", wait_until="domcontentloaded", timeout=30000)
+            await page.goto(
+                "https://deviceandbrowserinfo.com/are_you_a_bot",
+                wait_until="domcontentloaded",
+                timeout=30000,
+            )
             logger.info("✅ Bot detection page loaded!")
         except Exception as e:
             logger.warning(f"⚠️ Auto-nav failed: {e}")

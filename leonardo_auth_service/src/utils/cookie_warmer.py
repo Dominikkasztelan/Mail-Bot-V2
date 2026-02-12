@@ -41,7 +41,7 @@ class CookieWarmer:
                 consent = self.page.locator("button:has-text('Accept all'), button:has-text('Reject all')").first
                 await consent.click(timeout=3000)
                 await self._human_delay(1, 2)
-            except:
+            except Exception:
                 pass
 
             # 3. Search for target
@@ -72,5 +72,5 @@ class CookieWarmer:
             await self.page.goto(random.choice(sites), timeout=10000)
             await self._human_delay(2, 3)
             await self._human_scroll()
-        except:
+        except Exception:
             pass

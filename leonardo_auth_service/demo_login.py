@@ -27,7 +27,10 @@ async def run_demo() -> None:
                 logger.error(f"❌ Błąd serwera: {response.text}")
 
         except httpx.ConnectError:
-            logger.error("❌ Nie można połączyć z serwerem. Upewnij się, że uruchomiłeś 'python -m src.main' w innym oknie!")
+            logger.error(
+                "❌ Nie można połączyć z serwerem. "
+                "Upewnij się, że uruchomiłeś 'python -m src.main' w innym oknie!"
+            )
 
 if __name__ == "__main__":
     print("--- DEMO LOGOWANIA LEONARDO.AI ---")

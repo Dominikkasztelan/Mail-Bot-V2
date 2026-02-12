@@ -12,7 +12,7 @@ from shared.browser.core.factory import BrowserCore  # noqa: E402
 from shared.browser.core.stealth.injector import StealthConfig  # noqa: E402
 
 
-async def test_site(browser, url, name):
+async def check_site(browser, url, name):
     logger.info(f"🔍 Testing {name}...")
     context = await browser.create_context()
     page = await context.new_page()
@@ -66,7 +66,7 @@ async def run_ultimate_test():
         await browser.start()
 
         for url, name in sites:
-            await test_site(browser, url, name)
+            await check_site(browser, url, name)
 
         logger.info("✅ All tests completed! Check the 'stealth_results/' folder for screenshots.")
 

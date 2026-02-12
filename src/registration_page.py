@@ -84,7 +84,7 @@ class RegistrationPage:
                 logger.warning("⚠️ Page loaded with active Captcha blockade!")
         except (PlaywrightError, PlaywrightTimeout) as e:
             logger.error(f"Critical: Failed to load page. {e}")
-            raise ElementNotFoundError(f"Page load failed: {e}")
+            raise ElementNotFoundError(f"Page load failed: {e}") from e
 
     def human_delay(self) -> None:
         """Simulate human thinking time using browser timeout."""
@@ -157,12 +157,13 @@ class RegistrationPage:
 
     def _find_target_frame(self) -> Frame | None:
         # Try to find frame with payload
-        for attempt in range(5):
+        for _attempt in range(5):
             all_frames = self.page.frames
             target_frame = None
 
             for frame in all_frames:
-                if frame.is_detached(): continue
+                if frame.is_detached():
+                    continue
                 url = frame.url.lower()
 
                 if ("recaptcha" in url) and ("bframe" in url or "payload" in url):
@@ -186,7 +187,8 @@ class RegistrationPage:
 
     def _attempt_checkbox_click(self, frames: list[Frame]) -> None:
         for frame in frames:
-            if frame.is_detached(): continue
+            if frame.is_detached():
+                continue
             cb = frame.locator("#recaptcha-anchor").first
             if cb.is_visible():
                 class_attr = cb.get_attribute("class") or ""
@@ -257,10 +259,10 @@ class RegistrationPage:
         self.retry_action("RepeatPass", lambda: self.human_type(self.input_password_repeat, identity['password']))
 
     def accept_terms(self) -> None:
-        self.retry_action("Terms", lambda: self.checkbox_accept_all.click())
+        self.retry_action("Terms", self.checkbox_accept_all.click)
 
     def submit(self) -> None:
-        self.retry_action("Submit", lambda: self.btn_submit.click())
+        self.retry_action("Submit", self.btn_submit.click)
 
     def verify_success(self) -> bool:
         try:
@@ -336,7 +338,9 @@ class RegistrationPage:
             # Simple backoff/retry
             logger.warning(f"⚠️ Login {current_login}@{self.DEFAULT_DOMAIN} taken. Retrying...")
 
-        raise RegistrationFailedError(f"Could not find free login in {self.DEFAULT_DOMAIN} after {attempts_limit} attempts.")
+        raise RegistrationFailedError(
+            f"Could not find free login in {self.DEFAULT_DOMAIN} after {attempts_limit} attempts."
+        )
 
     def _generate_login_variant(self, base_login: str, attempt: int) -> str:
         if attempt == 0:

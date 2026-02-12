@@ -25,14 +25,20 @@ class StorageManager:
 
         # Zabezpieczenie (Fallback) na wypadek niespójności danych
         if not domain:
-            logger.warning(f"⚠️ [STORAGE] Brak domeny w identity dla loginu '{identity.get('login')}'. Używam domyślnej 'interia.pl'.")
+            logger.warning(
+                f"⚠️ [STORAGE] Brak domeny w identity dla loginu '{identity.get('login')}'. "
+                "Używam domyślnej 'interia.pl'."
+            )
             domain = "interia.pl"
 
         # 2. KONSTRUKCJA ADRESU EMAIL
         full_email = f"{identity['login']}@{domain}"
 
         # Format linii wyjściowej: EMAIL | HASŁO | IMIĘ NAZWISKO | DATA
-        line = f"{full_email} | {identity['password']} | {identity['first_name']} {identity['last_name']} | {timestamp}\n"
+        line = (
+            f"{full_email} | {identity['password']} | "
+            f"{identity['first_name']} {identity['last_name']} | {timestamp}\n"
+        )
 
         try:
             # Sekcja krytyczna zapisu do pliku (obsługa Locka z Multiprocessing)

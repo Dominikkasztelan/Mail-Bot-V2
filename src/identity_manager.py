@@ -23,7 +23,8 @@ class IdentityManager:
         if not os.path.exists(self.db_path):
             return False
         try:
-            if lock: lock.acquire()
+            if lock:
+                lock.acquire()
             try:
                 with open(self.db_path, encoding="utf-8") as f:
                     for line in f:
@@ -31,7 +32,8 @@ class IdentityManager:
                         if f"{login}@" in line:
                             return True
             finally:
-                if lock: lock.release()
+                if lock:
+                    lock.release()
         except OSError:
             pass
         return False

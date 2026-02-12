@@ -7,7 +7,13 @@ class ProxyConfig:
     password: str | None = None
     bypass: str | None = None
 
-    def __init__(self, server: str, username: str | None = None, password: str | None = None, bypass: str | None = None) -> None:
+    def __init__(
+        self,
+        server: str,
+        username: str | None = None,
+        password: str | None = None,
+        bypass: str | None = None,
+    ) -> None:
         self.server = server
         self.username = username
         self.password = password

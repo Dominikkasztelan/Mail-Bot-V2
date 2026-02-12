@@ -1,0 +1,303 @@
+﻿E501 Line too long (125 > 120)
+  --> leonardo_auth_service\demo_login.py:30:120
+   |
+29 |         except httpx.ConnectError:
+30 |             logger.error("ÔŁî Nie mo┼╝na po┼é─ůczy─ç z serwerem. Upewnij si─Ö, ┼╝e uruchomi┼ée┼Ť 'python -m src.main' w innym oknie!")
+   |                                                                                                                         ^^^^^
+31 |
+32 | if __name__ == "__main__":
+   |
+
+E501 Line too long (121 > 120)
+  --> leonardo_auth_service\inspect_selectors.py:29:121
+   |
+27 |             id_attr = await el.get_attribute("id")
+28 |             label = await el.get_attribute("aria-label")
+29 |             print(f"  {i+1}. ID: {id_attr}, Name: {name}, Type: {type_attr}, Placeholder: {placeholder}, Label: {label}")
+   |                                                                                                                         ^
+30 |
+31 |         # List all buttons
+   |
+
+E501 Line too long (128 > 120)
+  --> leonardo_auth_service\src\auth\email_login.py:25:121
+   |
+23 |             raise ValueError("Email and password are required for Email Login.")
+24 |
+25 |         # Mypy aid: Assert they are strings (since we checked truthiness, but mypy might need explicit cast if Dict is str, Any)
+   |                                                                                                                         ^^^^^^^^
+26 |         assert isinstance(email, str)
+27 |         assert isinstance(password, str)
+   |
+
+B904 Within an `except` clause, raise exceptions with `raise ... from err` or `raise ... from None` to distinguish them from errors in exception handling
+   --> leonardo_auth_service\src\main.py:123:9
+    |
+121 |     except Exception as e:
+122 |         logger.exception("ÔŁî Login process failed")
+123 |         raise HTTPException(status_code=500, detail=str(e))
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+124 |
+125 |     finally:
+    |
+
+E722 Do not use bare `except`
+  --> leonardo_auth_service\src\utils\cookie_warmer.py:44:13
+   |
+42 |                 await consent.click(timeout=3000)
+43 |                 await self._human_delay(1, 2)
+44 |             except:
+   |             ^^^^^^
+45 |                 pass
+   |
+
+E722 Do not use bare `except`
+  --> leonardo_auth_service\src\utils\cookie_warmer.py:75:9
+   |
+73 |             await self._human_delay(2, 3)
+74 |             await self._human_scroll()
+75 |         except:
+   |         ^^^^^^
+76 |             pass
+   |
+
+PLC0415 `import` should be at the top-level of a file
+  --> leonardo_auth_service\tests\test_login_flow.py:8:5
+   |
+ 6 | @pytest.mark.asyncio
+ 7 | async def test_leonardo_login_flow_visual() -> None:
+ 8 |     from src.auth.email_login import EmailLoginStrategy
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 9 |
+10 |     print("\n[STEP 1] Initializing Browser Factory...")
+   |
+
+E501 Line too long (129 > 120)
+  --> shared\browser\core\proxy\manager.py:10:121
+   |
+ 8 |     bypass: str | None = None
+ 9 |
+10 |     def __init__(self, server: str, username: str | None = None, password: str | None = None, bypass: str | None = None) -> None:
+   |                                                                                                                         ^^^^^^^^^
+11 |         self.server = server
+12 |         self.username = username
+   |
+
+E501 Line too long (122 > 120)
+  --> src\config.py:53:121
+   |
+51 | USER_AGENTS = [
+52 |     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+53 |     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.6167.85 Safari/537.36",
+   |                                                                                                                         ^^
+54 |     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.6261.94 Safari/537.36",
+55 |     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.6312.58 Safari/537.36",
+   |
+
+E501 Line too long (122 > 120)
+  --> src\config.py:54:121
+   |
+52 |     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+53 |     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.6167.85 Safari/537.36",
+54 |     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.6261.94 Safari/537.36",
+   |                                                                                                                         ^^
+55 |     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.6312.58 Safari/537.36",
+56 |     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6367.60 Safari/537.36",
+   |
+
+E501 Line too long (122 > 120)
+  --> src\config.py:55:121
+   |
+53 |     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.6167.85 Safari/537.36",
+54 |     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.6261.94 Safari/537.36",
+55 |     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.6312.58 Safari/537.36",
+   |                                                                                                                         ^^
+56 |     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6367.60 Safari/537.36",
+57 |     "Mozilla/5.0 (Windows NT 11.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+   |
+
+E501 Line too long (122 > 120)
+  --> src\config.py:56:121
+   |
+54 |     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.6261.94 Safari/537.36",
+55 |     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.6312.58 Safari/537.36",
+56 |     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6367.60 Safari/537.36",
+   |                                                                                                                         ^^
+57 |     "Mozilla/5.0 (Windows NT 11.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+58 | ]
+   |
+
+E701 Multiple statements on one line (colon)
+  --> src\identity_manager.py:26:20
+   |
+24 |             return False
+25 |         try:
+26 |             if lock: lock.acquire()
+   |                    ^
+27 |             try:
+28 |                 with open(self.db_path, encoding="utf-8") as f:
+   |
+
+E701 Multiple statements on one line (colon)
+  --> src\identity_manager.py:34:24
+   |
+32 |                             return True
+33 |             finally:
+34 |                 if lock: lock.release()
+   |                        ^
+35 |         except OSError:
+36 |             pass
+   |
+
+B904 Within an `except` clause, raise exceptions with `raise ... from err` or `raise ... from None` to distinguish them from errors in exception handling
+  --> src\registration_page.py:87:13
+   |
+85 |         except (PlaywrightError, PlaywrightTimeout) as e:
+86 |             logger.error(f"Critical: Failed to load page. {e}")
+87 |             raise ElementNotFoundError(f"Page load failed: {e}")
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+88 |
+89 |     def human_delay(self) -> None:
+   |
+
+B007 Loop control variable `attempt` not used within loop body
+   --> src\registration_page.py:160:13
+    |
+158 |     def _find_target_frame(self) -> Frame | None:
+159 |         # Try to find frame with payload
+160 |         for attempt in range(5):
+    |             ^^^^^^^
+161 |             all_frames = self.page.frames
+162 |             target_frame = None
+    |
+help: Rename unused `attempt` to `_attempt`
+
+E701 Multiple statements on one line (colon)
+   --> src\registration_page.py:165:39
+    |
+164 |             for frame in all_frames:
+165 |                 if frame.is_detached(): continue
+    |                                       ^
+166 |                 url = frame.url.lower()
+    |
+
+E701 Multiple statements on one line (colon)
+   --> src\registration_page.py:189:35
+    |
+187 |     def _attempt_checkbox_click(self, frames: list[Frame]) -> None:
+188 |         for frame in frames:
+189 |             if frame.is_detached(): continue
+    |                                   ^
+190 |             cb = frame.locator("#recaptcha-anchor").first
+191 |             if cb.is_visible():
+    |
+
+PLW0108 Lambda may be unnecessary; consider inlining inner function
+   --> src\registration_page.py:260:36
+    |
+259 |     def accept_terms(self) -> None:
+260 |         self.retry_action("Terms", lambda: self.checkbox_accept_all.click())
+    |                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+261 |
+262 |     def submit(self) -> None:
+    |
+help: Inline function call
+
+PLW0108 Lambda may be unnecessary; consider inlining inner function
+   --> src\registration_page.py:263:37
+    |
+262 |     def submit(self) -> None:
+263 |         self.retry_action("Submit", lambda: self.btn_submit.click())
+    |                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+264 |
+265 |     def verify_success(self) -> bool:
+    |
+help: Inline function call
+
+E501 Line too long (125 > 120)
+   --> src\registration_page.py:339:121
+    |
+337 |             logger.warning(f"ÔÜá´ŞĆ Login {current_login}@{self.DEFAULT_DOMAIN} taken. Retrying...")
+338 |
+339 |         raise RegistrationFailedError(f"Could not find free login in {self.DEFAULT_DOMAIN} after {attempts_limit} attempts.")
+    |                                                                                                                         ^^^^^
+340 |
+341 |     def _generate_login_variant(self, base_login: str, attempt: int) -> str:
+    |
+
+E501 Line too long (134 > 120)
+  --> src\storage_manager.py:28:122
+   |
+26 | ÔÇŽanych
+27 | ÔÇŽ
+28 | ÔÇŽity dla loginu '{identity.get('login')}'. U┼╝ywam domy┼Ťlnej 'interia.pl'.")
+   |                                                              ^^^^^^^^^^^^^^
+29 | ÔÇŽ
+   |
+
+E501 Line too long (122 > 120)
+  --> src\storage_manager.py:35:121
+   |
+34 |         # Format linii wyj┼Ťciowej: EMAIL | HAS┼üO | IMI─ś NAZWISKO | DATA
+35 |         line = f"{full_email} | {identity['password']} | {identity['first_name']} {identity['last_name']} | {timestamp}\n"
+   |                                                                                                                         ^^
+36 |
+37 |         try:
+   |
+
+PLC0415 `import` should be at the top-level of a file
+  --> tests\e2e\test_stealth_v2.py:21:5
+   |
+19 |     from patchright.async_api import async_playwright  # noqa: PLC0415
+20 |
+21 |     from shared.browser.core.stealth.injector import StealthConfig, StealthInjector
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+22 |
+23 |     # Fresh profile dir every time
+   |
+
+PLC0415 `import` should be at the top-level of a file
+  --> tests\e2e\test_worker_fix.py:19:5
+   |
+18 | async def test():
+19 |     from patchright.async_api import async_playwright
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+20 |
+21 |     from shared.browser.core.stealth.injector import StealthConfig, StealthInjector
+   |
+
+PLC0415 `import` should be at the top-level of a file
+  --> tests\e2e\test_worker_fix.py:21:5
+   |
+19 |     from patchright.async_api import async_playwright
+20 |
+21 |     from shared.browser.core.stealth.injector import StealthConfig, StealthInjector
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+22 |
+23 |     # Fresh profile dir every time
+   |
+
+E501 Line too long (137 > 120)
+  --> tests\e2e\test_worker_fix.py:40:121
+   |
+38 | ÔÇŽ
+39 | ÔÇŽ
+40 | ÔÇŽ64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+   |                                                            ^^^^^^^^^^^^^^^^^
+41 | ÔÇŽ
+42 | ÔÇŽ",
+   |
+
+E501 Line too long (123 > 120)
+  --> tests\e2e\test_worker_fix.py:70:121
+   |
+68 |         logger.info("­čîÉ Navigating to bot detection page...")
+69 |         try:
+70 |             await page.goto("https://deviceandbrowserinfo.com/are_you_a_bot", wait_until="domcontentloaded", timeout=30000)
+   |                                                                                                                         ^^^
+71 |             logger.info("Ôťů Bot detection page loaded!")
+72 |         except Exception as e:
+   |
+
+Found 28 errors.
+No fixes available (3 hidden fixes can be enabled with the `--unsafe-fixes` option).

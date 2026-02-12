@@ -1,0 +1,63 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.13.11, pytest-9.0.2, pluggy-1.6.0 -- C:\Users\user\AppData\Local\Programs\Python\Python313\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\user\PycharmProjects\Bot_mail_creator
+configfile: pyproject.toml
+testpaths: tests
+plugins: anyio-4.12.1, Faker-40.4.0, asyncio-1.3.0, base-url-2.1.0, cov-7.0.0, mock-3.15.1, playwright-0.7.2, xdist-3.8.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collecting ... collected 27 items
+
+tests/e2e/test_areyouheadless.py::test_areyouheadless PASSED             [  3%]
+tests/e2e/test_browserinfo.py::test_browserinfo PASSED                   [  7%]
+tests/e2e/test_multiple_sites.py::test_all_sites PASSED                  [ 11%]
+tests/e2e/test_pixelscan.py::test_pixelscan PASSED                       [ 14%]
+tests/e2e/test_stealth_v2.py::test PASSED                                [ 18%]
+tests/e2e/test_worker_debug.py::test PASSED                              [ 22%]
+tests/e2e/test_worker_fix.py::test PASSED                                [ 25%]
+tests/test_cookie_warmer.py::TestCookieWarmerUnit::test_human_delay_is_static PASSED [ 29%]
+tests/test_cookie_warmer.py::TestCookieWarmerUnit::test_safe_wait_returns_true_when_visible PASSED [ 33%]
+tests/test_cookie_warmer.py::TestCookieWarmerUnit::test_safe_wait_returns_false_on_timeout PASSED [ 37%]
+tests/test_cookie_warmer.py::TestCookieWarmerUnit::test_simple_consent_click_tries_multiple_selectors PASSED [ 40%]
+tests/test_cookie_warmer.py::TestCookieWarmerScenarios::test_action_visit_onet_calls_goto 
+-------------------------------- live log call --------------------------------
+INFO     CookieWarmer:cookie_warmer.py:130 \U0001f36a [WARMER] -> Onet\nPASSED                                                                   [ 44%]
+tests/test_cookie_warmer.py::TestCookieWarmerScenarios::test_action_visit_wp_calls_goto 
+-------------------------------- live log call --------------------------------
+INFO     CookieWarmer:cookie_warmer.py:140 \U0001f36a [WARMER] -> WP\nPASSED                                                                   [ 48%]
+tests/test_identity.py::test_identity_structure PASSED                   [ 51%]
+tests/test_identity.py::test_check_duplicates_logic PASSED               [ 55%]
+tests/test_profiles.py::test_save_and_load_profile 
+-------------------------------- live log call --------------------------------
+INFO     ProfileManager:profile_manager.py:45 \U0001f4be [MANAGER] Dodano nowy profil do puli: d39e4719-d7ed-41e5-ab71-88bdffe5cea0\nINFO     ProfileManager:profile_manager.py:80 \U0001f4e4 [MANAGER] Pobrano profil: d39e4719-d7ed-41e5-ab71-88bdffe5cea0\nPASSED                                                                   [ 59%]
+tests/test_registration.py::TestRegistrationPageUnit::test_generate_login_variant_logic PASSED [ 62%]
+tests/test_registration.py::TestRegistrationPageUnit::test_ensure_unique_identity_success_first_try 
+-------------------------------- live log call --------------------------------
+INFO     src.registration_page:registration_page.py:332 \u2705 Available account found: test.user @ interia.pl\nPASSED                                                                   [ 66%]
+tests/test_registration.py::TestRegistrationPageUnit::test_ensure_unique_identity_retries 
+-------------------------------- live log call --------------------------------
+WARNING  src.registration_page:registration_page.py:339 \u26a0\ufe0f Login taken.login@interia.pl taken. Retrying...\nINFO     src.registration_page:registration_page.py:332 \u2705 Available account found: taken.login.1955 @ interia.pl\nPASSED                                                                   [ 70%]
+tests/test_smoke_e2e.py::test_interia_form_selectors_are_valid[chromium] 
+-------------------------------- live log call --------------------------------
+INFO     src.captcha_solver:captcha_solver.py:46 \U0001f527 Loaded 2 Gemini API keys.\nINFO     src.registration_page:registration_page.py:77 \U0001f504 Opening registration page...\nINFO     src.registration_page:registration_page.py:119 \u26a0\ufe0f Potential blockade detected.\nWARNING  src.registration_page:registration_page.py:127 \U0001f6a8 Passing frame to Solver...\nINFO     src.captcha_solver:captcha_solver.py:65 \U0001f916 Starting Captcha solving loop...\nINFO     src.captcha_solver:captcha_solver.py:93 \u2705 Captcha frame detached or hidden - assuming success.\nPASSED                                                                   [ 74%]
+tests/test_solver.py::test_solver_parses_json_correctly PASSED           [ 77%]
+tests/test_solver.py::test_find_captcha_target_found 
+-------------------------------- live log call --------------------------------
+INFO     src.captcha_solver:captcha_solver.py:46 \U0001f527 Loaded 1 Gemini API keys.\nPASSED                                                                   [ 81%]
+tests/test_solver.py::test_is_solved_or_detached_true 
+-------------------------------- live log call --------------------------------
+INFO     src.captcha_solver:captcha_solver.py:46 \U0001f527 Loaded 1 Gemini API keys.\nINFO     src.captcha_solver:captcha_solver.py:93 \u2705 Captcha frame detached or hidden - assuming success.\nPASSED                                                                   [ 85%]
+tests/test_storage.py::test_save_account_creates_file 
+-------------------------------- live log call --------------------------------
+INFO     GLOBAL:storage_manager.py:55 \U0001f4be [STORAGE] Zapisano konto: jan.kowalski@interia.pl\nPASSED                                                                   [ 88%]
+tests/test_utils.py::test_clean_polish_chars_basic PASSED                [ 92%]
+tests/test_utils.py::test_clean_polish_chars_mixed PASSED                [ 96%]
+tests/test_utils.py::test_clean_polish_chars_no_change PASSED            [100%]
+
+============================== warnings summary ===============================
+tests\test_smoke_e2e.py:10
+  C:\Users\user\PycharmProjects\Bot_mail_creator\tests\test_smoke_e2e.py:10: PytestUnknownMarkWarning: Unknown pytest.mark.slow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.slow
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================== 27 passed, 1 warning in 321.22s (0:05:21) ==================

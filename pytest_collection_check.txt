@@ -1,0 +1,285 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.13.11, pytest-9.0.2, pluggy-1.6.0 -- C:\Users\user\AppData\Local\Programs\Python\Python313\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\user\PycharmProjects\Bot_mail_creator
+configfile: pyproject.toml
+testpaths: tests
+plugins: anyio-4.12.1, Faker-40.4.0, asyncio-1.3.0, base-url-2.1.0, cov-7.0.0, mock-3.15.1, playwright-0.7.2, xdist-3.8.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 28 items
+
+tests/e2e/test_areyouheadless.py::test_areyouheadless 
+-------------------------------- live log call --------------------------------
+ERROR    TestRunner:conftest.py:28 \u274c Test failed: test_areyouheadless\nFAILED                                                                   [  3%]
+tests/e2e/test_browserinfo.py::test_browserinfo 
+-------------------------------- live log call --------------------------------
+ERROR    TestRunner:conftest.py:28 \u274c Test failed: test_browserinfo\nFAILED                                                                   [  7%]
+tests/e2e/test_multiple_sites.py::test_all_sites 
+-------------------------------- live log call --------------------------------
+ERROR    TestRunner:conftest.py:28 \u274c Test failed: test_all_sites\nFAILED                                                                   [ 10%]
+tests/e2e/test_pixelscan.py::test_pixelscan 
+-------------------------------- live log call --------------------------------
+ERROR    TestRunner:conftest.py:28 \u274c Test failed: test_pixelscan\nFAILED                                                                   [ 14%]
+tests/e2e/test_stealth_v2.py::test 
+-------------------------------- live log call --------------------------------
+ERROR    TestRunner:conftest.py:28 \u274c Test failed: test\nFAILED                                                                   [ 17%]
+tests/e2e/test_worker_debug.py::test 
+-------------------------------- live log call --------------------------------
+ERROR    TestRunner:conftest.py:28 \u274c Test failed: test\nFAILED                                                                   [ 21%]
+tests/e2e/test_worker_fix.py::test 
+-------------------------------- live log call --------------------------------
+ERROR    TestRunner:conftest.py:28 \u274c Test failed: test\nFAILED                                                                   [ 25%]
+tests/e2e/ultimate_stealth_test.py::test_site[chromium] ERROR            [ 28%]
+tests/test_smoke_e2e.py::test_interia_form_selectors_are_valid[chromium] 
+-------------------------------- live log call --------------------------------
+INFO     src.captcha_solver:captcha_solver.py:46 \U0001f527 Loaded 2 Gemini API keys.\nINFO     src.registration_page:registration_page.py:77 \U0001f504 Opening registration page...\nINFO     src.registration_page:registration_page.py:119 \u26a0\ufe0f Potential blockade detected.\nWARNING  src.registration_page:registration_page.py:127 \U0001f6a8 Passing frame to Solver...\nINFO     src.captcha_solver:captcha_solver.py:65 \U0001f916 Starting Captcha solving loop...\nINFO     src.captcha_solver:captcha_solver.py:93 \u2705 Captcha frame detached or hidden - assuming success.\nPASSED                                                                   [ 32%]
+tests/test_cookie_warmer.py::TestCookieWarmerUnit::test_human_delay_is_static PASSED [ 35%]
+tests/test_cookie_warmer.py::TestCookieWarmerUnit::test_safe_wait_returns_true_when_visible PASSED [ 39%]
+tests/test_cookie_warmer.py::TestCookieWarmerUnit::test_safe_wait_returns_false_on_timeout PASSED [ 42%]
+tests/test_cookie_warmer.py::TestCookieWarmerUnit::test_simple_consent_click_tries_multiple_selectors PASSED [ 46%]
+tests/test_cookie_warmer.py::TestCookieWarmerScenarios::test_action_visit_onet_calls_goto 
+-------------------------------- live log call --------------------------------
+INFO     CookieWarmer:cookie_warmer.py:130 \U0001f36a [WARMER] -> Onet\nPASSED                                                                   [ 50%]
+tests/test_cookie_warmer.py::TestCookieWarmerScenarios::test_action_visit_wp_calls_goto 
+-------------------------------- live log call --------------------------------
+INFO     CookieWarmer:cookie_warmer.py:140 \U0001f36a [WARMER] -> WP\nPASSED                                                                   [ 53%]
+tests/test_identity.py::test_identity_structure PASSED                   [ 57%]
+tests/test_identity.py::test_check_duplicates_logic PASSED               [ 60%]
+tests/test_profiles.py::test_save_and_load_profile 
+-------------------------------- live log call --------------------------------
+INFO     ProfileManager:profile_manager.py:45 \U0001f4be [MANAGER] Dodano nowy profil do puli: 20b9cc90-91d2-4501-aa02-7fcd4fe5ec50\nINFO     ProfileManager:profile_manager.py:80 \U0001f4e4 [MANAGER] Pobrano profil: 20b9cc90-91d2-4501-aa02-7fcd4fe5ec50\nPASSED                                                                   [ 64%]
+tests/test_registration.py::TestRegistrationPageUnit::test_generate_login_variant_logic PASSED [ 67%]
+tests/test_registration.py::TestRegistrationPageUnit::test_ensure_unique_identity_success_first_try 
+-------------------------------- live log call --------------------------------
+INFO     src.registration_page:registration_page.py:332 \u2705 Available account found: test.user @ interia.pl\nPASSED                                                                   [ 71%]
+tests/test_registration.py::TestRegistrationPageUnit::test_ensure_unique_identity_retries 
+-------------------------------- live log call --------------------------------
+WARNING  src.registration_page:registration_page.py:339 \u26a0\ufe0f Login taken.login@interia.pl taken. Retrying...\nINFO     src.registration_page:registration_page.py:332 \u2705 Available account found: taken.login.3129 @ interia.pl\nPASSED                                                                   [ 75%]
+tests/test_solver.py::test_solver_parses_json_correctly PASSED           [ 78%]
+tests/test_solver.py::test_find_captcha_target_found 
+-------------------------------- live log call --------------------------------
+INFO     src.captcha_solver:captcha_solver.py:46 \U0001f527 Loaded 1 Gemini API keys.\nPASSED                                                                   [ 82%]
+tests/test_solver.py::test_is_solved_or_detached_true 
+-------------------------------- live log call --------------------------------
+INFO     src.captcha_solver:captcha_solver.py:46 \U0001f527 Loaded 1 Gemini API keys.\nINFO     src.captcha_solver:captcha_solver.py:93 \u2705 Captcha frame detached or hidden - assuming success.\nPASSED                                                                   [ 85%]
+tests/test_storage.py::test_save_account_creates_file 
+-------------------------------- live log call --------------------------------
+INFO     GLOBAL:storage_manager.py:55 \U0001f4be [STORAGE] Zapisano konto: jan.kowalski@interia.pl\nPASSED                                                                   [ 89%]
+tests/test_utils.py::test_clean_polish_chars_basic PASSED                [ 92%]
+tests/test_utils.py::test_clean_polish_chars_mixed PASSED                [ 96%]
+tests/test_utils.py::test_clean_polish_chars_no_change PASSED            [100%]
+
+=================================== ERRORS ====================================
+____________________ ERROR at setup of test_site[chromium] ____________________
+file C:\Users\user\PycharmProjects\Bot_mail_creator\tests\e2e\ultimate_stealth_test.py, line 15
+  async def test_site(browser, url, name):
+      logger.info(f"\U0001f50d Testing {name}...")
+      context = await browser.create_context()
+      page = await context.new_page()
+
+      try:
+          # Some sites might take longer to load or check
+          await page.goto(url, wait_until="networkidle", timeout=60000)
+
+          # Wait a bit longer for scripts to run
+          await asyncio.sleep(5)
+
+          # Save screenshot
+          screenshot_path = f"stealth_results/{name.lower().replace(' ', '_')}.png"
+          await page.screenshot(path=screenshot_path, full_page=True)
+          logger.info(f"\U0001f4f8 Screenshot saved: {screenshot_path}")
+
+          return True
+      except Exception as e:
+          logger.error(f"\u274c Failed to test {name}: {e}")
+          return False
+      finally:
+          await context.close()
+E       fixture 'url' not found
+>       available fixtures: _artifacts_recorder, _class_scoped_runner, _function_scoped_runner, _module_scoped_runner, _package_scoped_runner, _pw_artifacts_folder, _session_faker, _session_scoped_runner, _verify_url, anyio_backend, anyio_backend_name, anyio_backend_options, base_url, browser, browser_channel, browser_context_args, browser_name, browser_type, browser_type_launch_args, cache, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, class_mocker, connect_options, context, cov, delete_output_dir, device, doctest_namespace, event_loop_policy, faker, free_tcp_port, free_tcp_port_factory, free_udp_port, free_udp_port_factory, is_chromium, is_firefox, is_webkit, launch_browser, mocker, module_mocker, monkeypatch, new_context, no_cover, output_path, package_mocker, page, playwright, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, session_mocker, subtests, testrun_uid, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory, unused_tcp_port, unused_tcp_port_factory, unused_udp_port, unused_udp_port_factory, worker_id
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+C:\Users\user\PycharmProjects\Bot_mail_creator\tests\e2e\ultimate_stealth_test.py:15
+---------------------------- Captured stdout setup ----------------------------
+2026-02-12 01:41:25 - [DEBUG] - asyncio - Using proactor: IocpProactor
+----------------------------- Captured log setup ------------------------------
+DEBUG    asyncio:proactor_events.py:633 Using proactor: IocpProactor
+================================== FAILURES ===================================
+_____________________________ test_areyouheadless _____________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+---------------------------- Captured stdout setup ----------------------------
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Looking for locale `en_US` in provider `faker.providers.address`.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Provider `faker.providers.address` has been localized to `en_US`.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Looking for locale `en_US` in provider `faker.providers.automotive`.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Provider `faker.providers.automotive` has been localized to `en_US`.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Looking for locale `en_US` in provider `faker.providers.bank`.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Specified locale `en_US` is not available for provider `faker.providers.bank`. Locale reset to `en_GB` for this provider.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Looking for locale `en_US` in provider `faker.providers.barcode`.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Provider `faker.providers.barcode` has been localized to `en_US`.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Looking for locale `en_US` in provider `faker.providers.color`.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Provider `faker.providers.color` has been localized to `en_US`.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Looking for locale `en_US` in provider `faker.providers.company`.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Provider `faker.providers.company` has been localized to `en_US`.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Looking for locale `en_US` in provider `faker.providers.credit_card`.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Provider `faker.providers.credit_card` has been localized to `en_US`.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Looking for locale `en_US` in provider `faker.providers.currency`.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Provider `faker.providers.currency` has been localized to `en_US`.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Looking for locale `en_US` in provider `faker.providers.date_time`.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Provider `faker.providers.date_time` has been localized to `en_US`.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Provider `faker.providers.doi` does not feature localization. Specified locale `en_US` is not used for this provider.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Provider `faker.providers.emoji` does not feature localization. Specified locale `en_US` is not used for this provider.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Provider `faker.providers.file` does not feature localization. Specified locale `en_US` is not used for this provider.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Looking for locale `en_US` in provider `faker.providers.geo`.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Provider `faker.providers.geo` has been localized to `en_US`.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Looking for locale `en_US` in provider `faker.providers.internet`.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Provider `faker.providers.internet` has been localized to `en_US`.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Looking for locale `en_US` in provider `faker.providers.isbn`.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Provider `faker.providers.isbn` has been localized to `en_US`.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Looking for locale `en_US` in provider `faker.providers.job`.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Provider `faker.providers.job` has been localized to `en_US`.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Looking for locale `en_US` in provider `faker.providers.lorem`.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Provider `faker.providers.lorem` has been localized to `en_US`.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Looking for locale `en_US` in provider `faker.providers.misc`.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Provider `faker.providers.misc` has been localized to `en_US`.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Looking for locale `en_US` in provider `faker.providers.passport`.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Provider `faker.providers.passport` has been localized to `en_US`.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Looking for locale `en_US` in provider `faker.providers.person`.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Provider `faker.providers.person` has been localized to `en_US`.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Looking for locale `en_US` in provider `faker.providers.phone_number`.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Provider `faker.providers.phone_number` has been localized to `en_US`.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Provider `faker.providers.profile` does not feature localization. Specified locale `en_US` is not used for this provider.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Provider `faker.providers.python` does not feature localization. Specified locale `en_US` is not used for this provider.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Provider `faker.providers.sbn` does not feature localization. Specified locale `en_US` is not used for this provider.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Looking for locale `en_US` in provider `faker.providers.ssn`.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Provider `faker.providers.ssn` has been localized to `en_US`.
+2026-02-12 01:41:25 - [DEBUG] - faker.factory - Provider `faker.providers.user_agent` does not feature localization. Specified locale `en_US` is not used for this provider.
+----------------------------- Captured log setup ------------------------------
+DEBUG    faker.factory:factory.py:78 Looking for locale `en_US` in provider `faker.providers.address`.
+DEBUG    faker.factory:factory.py:97 Provider `faker.providers.address` has been localized to `en_US`.
+DEBUG    faker.factory:factory.py:78 Looking for locale `en_US` in provider `faker.providers.automotive`.
+DEBUG    faker.factory:factory.py:97 Provider `faker.providers.automotive` has been localized to `en_US`.
+DEBUG    faker.factory:factory.py:78 Looking for locale `en_US` in provider `faker.providers.bank`.
+DEBUG    faker.factory:factory.py:88 Specified locale `en_US` is not available for provider `faker.providers.bank`. Locale reset to `en_GB` for this provider.
+DEBUG    faker.factory:factory.py:78 Looking for locale `en_US` in provider `faker.providers.barcode`.
+DEBUG    faker.factory:factory.py:97 Provider `faker.providers.barcode` has been localized to `en_US`.
+DEBUG    faker.factory:factory.py:78 Looking for locale `en_US` in provider `faker.providers.color`.
+DEBUG    faker.factory:factory.py:97 Provider `faker.providers.color` has been localized to `en_US`.
+DEBUG    faker.factory:factory.py:78 Looking for locale `en_US` in provider `faker.providers.company`.
+DEBUG    faker.factory:factory.py:97 Provider `faker.providers.company` has been localized to `en_US`.
+DEBUG    faker.factory:factory.py:78 Looking for locale `en_US` in provider `faker.providers.credit_card`.
+DEBUG    faker.factory:factory.py:97 Provider `faker.providers.credit_card` has been localized to `en_US`.
+DEBUG    faker.factory:factory.py:78 Looking for locale `en_US` in provider `faker.providers.currency`.
+DEBUG    faker.factory:factory.py:97 Provider `faker.providers.currency` has been localized to `en_US`.
+DEBUG    faker.factory:factory.py:78 Looking for locale `en_US` in provider `faker.providers.date_time`.
+DEBUG    faker.factory:factory.py:97 Provider `faker.providers.date_time` has been localized to `en_US`.
+DEBUG    faker.factory:factory.py:108 Provider `faker.providers.doi` does not feature localization. Specified locale `en_US` is not used for this provider.
+DEBUG    faker.factory:factory.py:108 Provider `faker.providers.emoji` does not feature localization. Specified locale `en_US` is not used for this provider.
+DEBUG    faker.factory:factory.py:108 Provider `faker.providers.file` does not feature localization. Specified locale `en_US` is not used for this provider.
+DEBUG    faker.factory:factory.py:78 Looking for locale `en_US` in provider `faker.providers.geo`.
+DEBUG    faker.factory:factory.py:97 Provider `faker.providers.geo` has been localized to `en_US`.
+DEBUG    faker.factory:factory.py:78 Looking for locale `en_US` in provider `faker.providers.internet`.
+DEBUG    faker.factory:factory.py:97 Provider `faker.providers.internet` has been localized to `en_US`.
+DEBUG    faker.factory:factory.py:78 Looking for locale `en_US` in provider `faker.providers.isbn`.
+DEBUG    faker.factory:factory.py:97 Provider `faker.providers.isbn` has been localized to `en_US`.
+DEBUG    faker.factory:factory.py:78 Looking for locale `en_US` in provider `faker.providers.job`.
+DEBUG    faker.factory:factory.py:97 Provider `faker.providers.job` has been localized to `en_US`.
+DEBUG    faker.factory:factory.py:78 Looking for locale `en_US` in provider `faker.providers.lorem`.
+DEBUG    faker.factory:factory.py:97 Provider `faker.providers.lorem` has been localized to `en_US`.
+DEBUG    faker.factory:factory.py:78 Looking for locale `en_US` in provider `faker.providers.misc`.
+DEBUG    faker.factory:factory.py:97 Provider `faker.providers.misc` has been localized to `en_US`.
+DEBUG    faker.factory:factory.py:78 Looking for locale `en_US` in provider `faker.providers.passport`.
+DEBUG    faker.factory:factory.py:97 Provider `faker.providers.passport` has been localized to `en_US`.
+DEBUG    faker.factory:factory.py:78 Looking for locale `en_US` in provider `faker.providers.person`.
+DEBUG    faker.factory:factory.py:97 Provider `faker.providers.person` has been localized to `en_US`.
+DEBUG    faker.factory:factory.py:78 Looking for locale `en_US` in provider `faker.providers.phone_number`.
+DEBUG    faker.factory:factory.py:97 Provider `faker.providers.phone_number` has been localized to `en_US`.
+DEBUG    faker.factory:factory.py:108 Provider `faker.providers.profile` does not feature localization. Specified locale `en_US` is not used for this provider.
+DEBUG    faker.factory:factory.py:108 Provider `faker.providers.python` does not feature localization. Specified locale `en_US` is not used for this provider.
+DEBUG    faker.factory:factory.py:108 Provider `faker.providers.sbn` does not feature localization. Specified locale `en_US` is not used for this provider.
+DEBUG    faker.factory:factory.py:78 Looking for locale `en_US` in provider `faker.providers.ssn`.
+DEBUG    faker.factory:factory.py:97 Provider `faker.providers.ssn` has been localized to `en_US`.
+DEBUG    faker.factory:factory.py:108 Provider `faker.providers.user_agent` does not feature localization. Specified locale `en_US` is not used for this provider.
+-------------------------- Captured stdout teardown ---------------------------
+2026-02-12 01:41:25 - [ERROR] - TestRunner - \u274c Test failed: test_areyouheadless
+______________________________ test_browserinfo _______________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+-------------------------- Captured stdout teardown ---------------------------
+2026-02-12 01:41:25 - [ERROR] - TestRunner - \u274c Test failed: test_browserinfo
+_______________________________ test_all_sites ________________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+-------------------------- Captured stdout teardown ---------------------------
+2026-02-12 01:41:25 - [ERROR] - TestRunner - \u274c Test failed: test_all_sites
+_______________________________ test_pixelscan ________________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+-------------------------- Captured stdout teardown ---------------------------
+2026-02-12 01:41:25 - [ERROR] - TestRunner - \u274c Test failed: test_pixelscan
+____________________________________ test _____________________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+-------------------------- Captured stdout teardown ---------------------------
+2026-02-12 01:41:25 - [ERROR] - TestRunner - \u274c Test failed: test
+____________________________________ test _____________________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+-------------------------- Captured stdout teardown ---------------------------
+2026-02-12 01:41:25 - [ERROR] - TestRunner - \u274c Test failed: test
+____________________________________ test _____________________________________
+async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted
+-------------------------- Captured stdout teardown ---------------------------
+2026-02-12 01:41:25 - [ERROR] - TestRunner - \u274c Test failed: test
+============================== warnings summary ===============================
+tests\test_smoke_e2e.py:10
+  C:\Users\user\PycharmProjects\Bot_mail_creator\tests\test_smoke_e2e.py:10: PytestUnknownMarkWarning: Unknown pytest.mark.slow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.slow
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+ERROR tests/e2e/ultimate_stealth_test.py::test_site[chromium]
+FAILED tests/e2e/test_areyouheadless.py::test_areyouheadless - Failed: async ...
+FAILED tests/e2e/test_browserinfo.py::test_browserinfo - Failed: async def fu...
+FAILED tests/e2e/test_multiple_sites.py::test_all_sites - Failed: async def f...
+FAILED tests/e2e/test_pixelscan.py::test_pixelscan - Failed: async def functi...
+FAILED tests/e2e/test_stealth_v2.py::test - Failed: async def functions are n...
+FAILED tests/e2e/test_worker_debug.py::test - Failed: async def functions are...
+FAILED tests/e2e/test_worker_fix.py::test - Failed: async def functions are n...
+============== 7 failed, 20 passed, 1 warning, 1 error in 9.71s ===============

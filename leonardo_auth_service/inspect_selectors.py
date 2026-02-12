@@ -26,7 +26,10 @@ async def inspect_page() -> None:
             type_attr = await el.get_attribute("type")
             id_attr = await el.get_attribute("id")
             label = await el.get_attribute("aria-label")
-            print(f"  {i+1}. ID: {id_attr}, Name: {name}, Type: {type_attr}, Placeholder: {placeholder}, Label: {label}")
+            print(
+                f"  {i+1}. ID: {id_attr}, Name: {name}, Type: {type_attr}, "
+                f"Placeholder: {placeholder}, Label: {label}"
+            )
 
         # List all buttons
         buttons = await page.query_selector_all("button")

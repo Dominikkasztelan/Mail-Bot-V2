@@ -1,0 +1,60 @@
+﻿PLC0415 `import` should be at the top-level of a file
+  --> leonardo_auth_service\verify_stealth.py:16:5
+   |
+15 | async def verify():
+16 |     from loguru import logger
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+17 |     from src.core.browser import LeonardoBrowserFactory
+18 |     from src.config.settings import settings
+   |
+
+PLC0415 `import` should be at the top-level of a file
+  --> leonardo_auth_service\verify_stealth.py:17:5
+   |
+15 | async def verify():
+16 |     from loguru import logger
+17 |     from src.core.browser import LeonardoBrowserFactory
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+18 |     from src.config.settings import settings
+   |
+
+PLC0415 `import` should be at the top-level of a file
+  --> leonardo_auth_service\verify_stealth.py:18:5
+   |
+16 |     from loguru import logger
+17 |     from src.core.browser import LeonardoBrowserFactory
+18 |     from src.config.settings import settings
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+19 |     
+20 |     # Configure logger for Windows compatibility
+   |
+
+E501 Line too long (130 > 120)
+  --> scripts\diagnostic_isolate.py:11:121
+   |
+ 9 |     vendor = "Google Inc."
+10 |     renderer = "ANGLE (NVIDIA, NVIDIA GeForce GTX 1050 Ti Direct3D11 vs_5_0 ps_5_0)"
+11 |     user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+   |                                                                                                                         ^^^^^^^^^^
+12 |
+13 | async def test_part(part_name, script_content):
+   |
+
+F541 [*] f-string without any placeholders
+  --> scripts\diagnostic_isolate.py:71:21
+   |
+70 |       # 2. Worker Injection (Simplified)
+71 |       worker_script = f"""
+   |  _____________________^
+72 | |         const OriginalWorker = window.Worker;
+73 | |         window.Worker = function Worker(scriptURL, options) {{
+74 | |             return new OriginalWorker(scriptURL, options);
+75 | |         }};
+76 | |     """
+   | |_______^
+77 |       await test_part("Simple Worker Override", worker_script)
+   |
+help: Remove extraneous `f` prefix
+
+Found 5 errors.
+[*] 1 fixable with the `--fix` option.

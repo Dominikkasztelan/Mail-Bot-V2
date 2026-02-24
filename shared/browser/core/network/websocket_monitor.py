@@ -2,7 +2,7 @@ import asyncio
 import json
 from typing import Any
 
-from patchright.async_api import Page, WebSocket
+from playwright.async_api import Page, WebSocket
 
 
 class WebSocketMonitor:

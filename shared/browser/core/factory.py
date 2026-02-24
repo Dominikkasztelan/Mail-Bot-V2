@@ -1,7 +1,7 @@
 from typing import Any
 
 from loguru import logger
-from patchright.async_api import Browser, BrowserContext, Playwright, async_playwright
+from playwright.async_api import Browser, BrowserContext, Playwright, async_playwright
 
 from shared.browser.core.stealth.injector import StealthConfig, StealthInjector
 from shared.network.proxy_provider import ProxyProvider
@@ -74,7 +74,7 @@ class BrowserCore:
 
         launch_options: dict[str, Any] = {
             "headless": self.headless,
-            "channel": "chrome",
+            # "channel": "chrome", # Optional: using bundled chromium for better stability with stealth injection
             "args": args,
             "ignore_default_args": ["--enable-automation"]
         }

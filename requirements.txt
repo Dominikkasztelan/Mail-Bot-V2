@@ -1,17 +1,49 @@
-# --- Core Automation & Browser ---
-playwright>=1.57.0
-playwright-stealth>=1.0.6
+# === CORE BROWSER AUTOMATION ===
+patchright>=1.58.0
+playwright>=1.58.0
+playwright-stealth>=2.0.0
+undetected-chromedriver>=3.5.5
+selenium>=4.34.2
+webdriver-manager>=4.0.2
 
-# --- AI & Vision ---
+# === AI / VISION ===
 google-genai>=1.57.0
+google-generativeai>=0.8.6
+google-api-python-client>=2.187.0
+google-auth>=2.47.0
 
-# --- Data & Configuration ---
+# === HTTP / NETWORKING ===
+httpx>=0.28.1
+requests>=2.32.5
+fake-useragent>=2.2.0
+PySocks>=1.7.1
+
+# === DATA / UTILITIES ===
 python-dotenv>=1.2.1
 Faker>=40.1.0
-requests>=2.32.5
+pydantic>=2.12.5
+pydantic-settings>=2.13.1
+tenacity>=9.1.2
+loguru>=0.7.3
+PyYAML>=6.0.3
+tqdm>=4.67.1
+openpyxl>=3.1.5
+pandas>=2.3.1
+pillow>=12.0.0
+keyboard>=0.13.5
 
-# --- Testing ---
-pytest>=8.0.0
-pytest-playwright>=0.4.4
-pytest-mock>=3.12.0
-pytest-xdist>=3.5.0
+# === WEB SERVER (FastAPI) ===
+fastapi>=0.135.0
+uvicorn>=0.41.0
+
+# === TESTING ===
+pytest>=9.0.2
+pytest-asyncio>=1.3.0
+pytest-playwright>=0.7.2
+pytest-mock>=3.15.1
+pytest-xdist>=3.8.0
+pytest-cov>=7.0.0
+coverage>=7.13.1
+
+# === CODE QUALITY ===
+ruff>=0.14.14

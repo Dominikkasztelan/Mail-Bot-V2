@@ -1,3 +1,9 @@
+import sys
+import asyncio
+
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
 from typing import Any
 
 from loguru import logger
@@ -5,7 +11,6 @@ from playwright.async_api import Browser, BrowserContext, Playwright, async_play
 
 from shared.browser.core.stealth.injector import StealthConfig, StealthInjector
 from shared.network.proxy_provider import ProxyProvider
-
 
 class BrowserCore:
     """
@@ -93,14 +98,18 @@ class BrowserCore:
         logger.info("✅ Browser Core started successfully.")
 
     async def create_context(self, storage_state: Any | None = None, user_agent: str | None = None) -> BrowserContext:
-        """Creates a secure context with stealth injections."""
+        """
+        Creates a secure context with CDP-based stealth injection.
+
+        NOTE: We do NOT use context.add_init_script() or page.add_init_script()
+        because both break net::ERR_NAME_NOT_RESOLVED in Patchright on Windows/Python 3.13.
+        Instead, we use CDP Page.addScriptToEvaluateOnNewDocument via a context 'page' listener.
+        """
         if not self._browser:
             await self.start()
 
-        # Mypy assertion
         assert self._browser is not None
 
-        # Use UA from config if not provided
         ua = user_agent or self.stealth_config.user_agent
 
         context = await self._browser.new_context(
@@ -108,10 +117,10 @@ class BrowserCore:
             user_agent=ua,
             viewport={"width": 1920, "height": 1080},
             locale="pl-PL",
-            timezone_id="Europe/Warsaw",  # Should match proxy in prod
+            timezone_id="Europe/Warsaw",
         )
 
-        # Apply Stealth
+        # Register CDP stealth listener — fires on every new page in this context
         await self.stealth_injector.apply_stealth(context)
 
         return context

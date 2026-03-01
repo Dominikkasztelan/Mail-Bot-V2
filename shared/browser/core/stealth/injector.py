@@ -1,4 +1,5 @@
 # ruff: noqa: E501
+import logging
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -345,7 +346,6 @@ class StealthInjector:
                 pass
 
         except Exception as e:
-            import logging
             logging.getLogger(__name__).warning(f"[Stealth] CDP injection failed: {e}")
 
     async def apply_stealth(self, context: BrowserContext) -> None:

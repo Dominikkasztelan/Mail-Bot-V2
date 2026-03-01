@@ -1,53 +1,69 @@
-import asyncio
+"""
+E2E test: AreYouHeadless detection check using sync_playwright + CDP stealth.
+Uses the same approach as verify_stealth.py to avoid asyncio NotImplementedError
+on Windows/Python 3.13.
+"""
 import sys
+import time
 from pathlib import Path
 
 from loguru import logger
+from patchright.sync_api import sync_playwright
 
-# Add root to sys.path
-ROOT_DIR = Path(__file__).parent
+ROOT_DIR = Path(__file__).resolve().parent.parent.parent
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from shared.browser.core.factory import BrowserCore
-from shared.browser.core.stealth.injector import StealthConfig
+from shared.browser.core.stealth.injector import StealthConfig, StealthInjector
 
 
-async def test_areyouheadless():
-    logger.info("🎬 Opening Are You Headless detection test...")
-
-    # Use full stealth config
-    stealth = StealthConfig(
-        spoof_webgl=True,
-        mask_navigator=True,
-        canvas_noise=True,
-        audio_noise=True
-    )
-
-    # Launch in HEADED mode
-    browser = BrowserCore(headless=False, stealth_config=stealth)
-
+def inject_cdp_stealth(context, page, injector: StealthInjector) -> None:
+    """Inject stealth via CDP — avoids the Patchright/Windows DNS bug."""
+    client = context.new_cdp_session(page)
+    client.send("Page.enable")
+    client.send("Page.addScriptToEvaluateOnNewDocument", {"source": injector._stealth_script})
     try:
-        await browser.start()
-        context = await browser.create_context()
-        page = await context.new_page()
+        client.send("Emulation.setAutomationOverride", {"enabled": False})
+    except Exception:
+        pass
 
-        url = "https://arh.antoinevastel.com/bots/areyouheadless"
-        logger.info(f"🌐 Navigating to {url}...")
-        await page.goto(url)
 
-        logger.info("👀 Are You Headless loaded. Check the results.")
-        logger.info("⏳ Browser will stay open for 1000 seconds (or until you terminate it).")
-        logger.info("💡 This test checks for headless Chrome detection.")
+def test_areyouheadless():
+    """Verify that Patchright with CDP stealth is not detected as headless Chrome."""
+    logger.info("🎬 AreYouHeadless test starting...")
 
-        # Keep it open for a long time
-        await asyncio.sleep(1000)
+    config = StealthConfig()
+    injector = StealthInjector(config)
 
-    except Exception as e:
-        logger.error(f"❌ Error: {e}")
-    finally:
-        await browser.stop()
-        logger.info("👋 Browser closed.")
+    with sync_playwright() as p:
+        browser = p.chromium.launch(
+            headless=False,
+            args=["--disable-blink-features=AutomationControlled", "--disable-infobars"],
+            ignore_default_args=["--enable-automation"],
+        )
+        context = browser.new_context(
+            user_agent=config.user_agent,
+            viewport={"width": 1920, "height": 1080},
+        )
 
-if __name__ == "__main__":
-    asyncio.run(test_areyouheadless())
+        try:
+            page = context.new_page()
+            inject_cdp_stealth(context, page, injector)
+
+            url = "https://arh.antoinevastel.com/bots/areyouheadless"
+            logger.info(f"🌐 Navigating to {url}...")
+            page.goto(url, wait_until="domcontentloaded", timeout=20000)
+
+            time.sleep(5)
+
+            # Verify no headless detection
+            body_text = page.inner_text("body")
+            logger.info(f"Page text: {body_text[:200]}")
+            assert "not Chrome headless" in body_text or "not headless" in body_text.lower(), (
+                f"Headless was detected! Body: {body_text[:300]}"
+            )
+            logger.success("✅ Not detected as headless!")
+
+        finally:
+            browser.close()
+            logger.info("👋 Browser closed.")

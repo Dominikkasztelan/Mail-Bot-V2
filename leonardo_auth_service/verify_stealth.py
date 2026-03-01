@@ -9,7 +9,6 @@ The sync API uses greenlets internally — no asyncio subprocesses, no loop conf
 """
 import sys
 import time
-import traceback
 from pathlib import Path
 
 from loguru import logger
@@ -20,7 +19,7 @@ project_root = Path(__file__).resolve().parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from shared.browser.core.stealth.injector import StealthConfig, StealthInjector
+from shared.browser.core.stealth.injector import StealthConfig, StealthInjector  # noqa: E402
 
 
 def create_cdp_stealth_context(playwright, headless: bool = False) -> tuple:
